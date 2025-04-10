@@ -74,10 +74,10 @@ public class ProgressRateFragment extends Fragment implements QuizData {
                     weeklyGoal = progress;
                     goalWeight.setText(formatWeeklyGoal(weeklyGoal));
 
-                    if (weeklyGoal > 3 && weeklyGoal < 6) {
+                    if (weeklyGoal > 3 && weeklyGoal <= 6) {
                         recommendedGoal.setTextColor(getResources().getColor(R.color.white));
                     } else {
-                        recommendedGoal.setTextColor(getResources().getColor(R.color.gray));
+                        recommendedGoal.setTextColor(getResources().getColor(android.R.color.transparent));
                     }
                     Log.d("ProgressRateFragment","Weekly goal " + weeklyGoal);
                 }

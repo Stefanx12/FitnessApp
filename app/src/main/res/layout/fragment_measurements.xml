@@ -4,7 +4,8 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".authentification.userinfo.MeasurementsFragment">
+    tools:context=".authentification.userinfo.MeasurementsFragment"
+    android:background="@drawable/quiz_background">
 
     <TextView
         android:id="@+id/measurements_text_view"
@@ -15,7 +16,7 @@
         android:textColor="@android:color/white"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="30dp" />
 
     <TextView
@@ -24,11 +25,11 @@
         android:layout_height="wrap_content"
         android:text="How tall are you?"
         android:textSize="16sp"
-        android:textColor="@android:color/darker_gray"
+        android:textColor="@color/white"
         app:layout_constraintTop_toBottomOf="@+id/measurements_text_view"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="16dp" />
+        android:layout_marginStart="35dp"
+        android:layout_marginTop="70dp" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:id="@+id/height_input"
@@ -37,15 +38,27 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/height_text_view"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="5dp">
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:layout_marginTop="5dp"
+        android:background="@drawable/rectangular_form_quiz">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/height_edit_text"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:inputType="number" />
+            android:layout_height="match_parent">
+
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/height_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textColor="@color/white"
+                android:textColorHint="@color/white"
+                android:inputType="number"
+                android:textAlignment="center"
+                android:hint="Enter your height"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
@@ -54,8 +67,8 @@
         android:layout_height="wrap_content"
         android:text="What is your weight?"
         android:textSize="16sp"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginStart="10dp"
+        android:textColor="@color/white"
+        android:layout_marginStart="35dp"
         app:layout_constraintTop_toBottomOf="@+id/height_input"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
@@ -66,29 +79,28 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="10dp"
         app:layout_constraintTop_toBottomOf="@+id/current_weight_text_view"
-        android:layout_marginTop="5dp">
+        android:layout_marginTop="5dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
+        android:background="@drawable/rectangular_form_quiz">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/current_weight_edit_text"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:inputType="numberDecimal" />
-    </com.google.android.material.textfield.TextInputLayout>
+            android:layout_height="match_parent">
 
-    <TextView
-        android:id="@+id/current_weight_update_text_view"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        app:layout_constraintTop_toBottomOf="@+id/current_weight_input"
-        app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginStart="10dp"
-        android:layout_marginTop="4dp"
-        android:text="Its ok to estimate it,you can update this later"
-        android:textSize="12sp"
-        android:textColor="@color/gray"/>
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/current_weight_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textColor="@color/white"
+                android:inputType="numberDecimal"
+                android:textAlignment="center"
+                android:hint="Enter your weight"
+                android:textColorHint="@color/white"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
         android:id="@+id/target_weight_text_view"
@@ -96,9 +108,9 @@
         android:layout_height="wrap_content"
         android:text="What is your target weight?"
         android:textSize="16sp"
-        android:textColor="@android:color/darker_gray"
-        android:layout_marginStart="10dp"
-        app:layout_constraintTop_toBottomOf="@+id/current_weight_update_text_view"
+        android:textColor="@color/white"
+        android:layout_marginStart="35dp"
+        app:layout_constraintTop_toBottomOf="@+id/current_weight_input"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="16dp" />
 
@@ -108,16 +120,27 @@
         android:layout_height="wrap_content"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginStart="10dp"
+        android:layout_marginStart="25dp"
+        android:layout_marginEnd="25dp"
         app:layout_constraintTop_toBottomOf="@+id/target_weight_text_view"
-        android:layout_marginTop="5dp">
+        android:layout_marginTop="5dp"
+        android:background="@drawable/rectangular_form_quiz">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/target_weight_edit_text"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/white"
-            android:inputType="numberDecimal" />
+            android:layout_height="match_parent">
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/target_weight_edit_text"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:textColor="@color/white"
+                android:inputType="numberDecimal"
+                android:textAlignment="center"
+                android:hint="Enter your goal weight"
+                android:textColorHint="@color/white"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
