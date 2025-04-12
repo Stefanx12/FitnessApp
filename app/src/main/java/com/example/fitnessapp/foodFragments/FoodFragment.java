@@ -204,7 +204,7 @@ public class FoodFragment extends Fragment {
         });
     }
 
-    private void loadFirestoreData() {
+    public void loadFirestoreData() {
         // Current day start
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 0);

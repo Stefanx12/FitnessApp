@@ -227,7 +227,7 @@ public class authFragment extends Fragment {
                }
 
                FirebaseFirestore db = FirebaseFirestore.getInstance();
-               db.collection("Users").document(email).get().addOnSuccessListener(
+               db.collection("Users").document(user.getEmail()).get().addOnSuccessListener(
                        documentSnapshot ->{
                            if(documentSnapshot.exists()){
                                SharedPreferences quizPref = requireContext().getSharedPreferences("QuizPreferences",Context.MODE_PRIVATE);
@@ -322,7 +322,7 @@ public class authFragment extends Fragment {
     private void saveUserToSharedPreferences(String email) {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserSharedPref", getActivity().MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-            editor.putString("UserMail", email);
+        editor.putString("UserMail", email);
         editor.apply();
     }
     private void navigateToQuiz() {

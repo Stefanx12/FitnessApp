@@ -120,6 +120,10 @@ public class HomeFragment extends Fragment {
             public void onClick(View v) {
 
                 changeFragment(new ProfileFragment());
+//                requireActivity().getSupportFragmentManager().beginTransaction()
+//                        .add(R.id.fragment_container,new ProfileFragment())
+//                        .remove(HomeFragment.this)
+//                        .commit();
                 ((MainActivity) getActivity()).deselectBottomNavItems();
                 ((MainActivity) getActivity()).disableBottomNav();
             }
@@ -326,5 +330,9 @@ public class HomeFragment extends Fragment {
 
 
         return targetCalories;
+    }
+
+    public void refreshData(){
+        retrieveDailyNutrients();
     }
 }

@@ -5,16 +5,14 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".Fragments.ProfileFragment"
-    android:background="@drawable/dark_pink_background">
-
+    android:background="@drawable/gray_smooth_home">
 
     <androidx.cardview.widget.CardView
         android:id="@+id/profile_commands_card_view"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintTop_toTopOf="parent"
-        android:backgroundTint="@color/gray">
-
+        android:backgroundTint="#3C7D63">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -29,7 +27,7 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:background="@android:color/transparent"
-                app:tint="@color/white" />
+                app:tint="#71C28F" />
 
             <TextView
                 android:layout_width="wrap_content"
@@ -64,8 +62,7 @@
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/gradient_cardview_profiel"
-            android:backgroundTint="@color/gray">
+            android:background="@drawable/profile_card_colors">
 
             <ImageButton
                 android:id="@+id/add_user_image_btn"
@@ -253,13 +250,12 @@
         android:layout_marginEnd="10dp"
         android:layout_marginTop="10dp"
         app:layout_constraintTop_toBottomOf="@+id/user_info_card_view"
-        android:backgroundTint="@color/gray"
+        android:backgroundTint="#4F8B6E"
         app:cardCornerRadius="16dp">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
-
 
             <ImageView
                 android:id="@+id/user_settings_img_view"
@@ -284,7 +280,6 @@
                 android:textColor="@color/white"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
-
     </androidx.cardview.widget.CardView>
 
     <Button
@@ -292,9 +287,24 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Sign out"
+        android:textColor="@color/white"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toEndOf="@+id/register_guest_btn"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="20dp"
+        android:backgroundTint="#3C7D63"/>
+
+    <Button
+        android:id="@+id/register_guest_btn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="20dp"/>
+        app:layout_constraintEnd_toStartOf="@+id/sign_out_user_btn"
+        android:layout_marginBottom="20dp"
+        android:backgroundTint="#3C7D63"
+        android:text="Register"
+        android:visibility="gone"
+        android:textColor="@color/white"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/green_yellow_background"
+    android:background="@drawable/gray_smooth_home"
     android:orientation="vertical"
     tools:context=".Fragments.HomeFragment">
 
@@ -40,7 +40,7 @@
             android:layout_centerVertical="true"
             android:gravity="center"
             android:text="@string/caloriesprogresstextview"
-            android:textColor="@color/lightOrange"
+            android:textColor="#2E4D42"
             android:textSize="20sp"
             android:textStyle="bold" />
 
@@ -56,7 +56,7 @@
         android:layout_marginStart="30dp"
         app:layout_constraintEnd_toStartOf="@+id/profileImageButton"
         android:text="@string/name_myfitness_app"
-        android:textColor="#5FA77B"
+        android:textColor="#2E4D42"
         android:textSize="25sp"
         android:textStyle="bold"/>
 
@@ -70,7 +70,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginEnd="20dp"
         android:background="@android:color/transparent"
-        app:tint="#5FA77B" />
+        app:tint="#2E4D42" />
 
     <include
         android:id="@+id/nutrient_bar_id"
@@ -78,7 +78,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toTopOf="@+id/breakfastcardview"
-        android:layout_marginBottom="16dp"/>
+        app:layout_constraintEnd_toEndOf="@+id/breakfastcardview"
+        android:layout_marginBottom="16dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginEnd="8dp"/>
     
     <androidx.cardview.widget.CardView
         android:id="@+id/breakfastcardview"

@@ -38,7 +38,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:backgroundTint="#A8E6CF"
+        android:backgroundTint="#d5ead6"
         android:text="@string/sign_up_txt"
         android:textColor="@color/gray"/>
 
@@ -95,7 +95,7 @@
                 android:id="@+id/pass_conf_txt_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rectangular_form"
+                android:background="@drawable/user_activity_card_view_gradient"
                 android:hint="Confirm Password"
                 android:inputType="textPassword"
                 app:layout_constraintTop_toTopOf="parent"
@@ -134,11 +134,12 @@
                 android:id="@+id/pass_txt_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rectangular_form"
+                android:background="@drawable/user_activity_card_view_gradient"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:hint="Password"
-                android:inputType="textPassword" />
+                android:inputType="textPassword"
+                android:textColorHint="@color/gray"/>
 
             <ImageButton
                 android:id="@+id/show_pass_img_btn"
@@ -165,7 +166,7 @@
         android:layout_marginTop="10dp"
         android:layout_marginEnd="10dp"
         android:layout_marginStart="10dp"
-        android:background="@drawable/rectangular_form"
+        android:background="@drawable/user_activity_card_view_gradient"
         app:layout_constraintTop_toBottomOf="@+id/pass_txt_layout">
 
         <CheckBox
@@ -173,7 +174,7 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:text=" Remember me"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="@color/gray"
             android:buttonTintMode="multiply"
             android:layout_weight="1"
             android:gravity="center_vertical" />
@@ -184,7 +185,7 @@
             android:layout_height="wrap_content"
             android:text="Forgot Password ?   "
             android:clickable="true"
-            android:textColor="@android:color/darker_gray"
+            android:textColor="@color/gray"
             android:textSize="14sp"
             android:gravity="center_vertical"
             android:layout_marginStart="10dp"/>
@@ -207,10 +208,11 @@
                 android:id="@+id/email_txt_input"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:background="@drawable/rectangular_form"
+                android:background="@drawable/user_activity_card_view_gradient"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
-                android:hint="Email" />
+                android:hint="Email"
+                android:textColorHint="@color/gray"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>

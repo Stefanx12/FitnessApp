@@ -63,5 +63,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginTop="10dp"
+        android:backgroundTint="#3C7D63"
         android:text="Done"/>
 </androidx.constraintlayout.widget.ConstraintLayout>
