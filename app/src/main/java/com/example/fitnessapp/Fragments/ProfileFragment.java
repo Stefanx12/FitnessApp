@@ -2,6 +2,7 @@ package com.example.fitnessapp.Fragments;
 
 import static com.example.fitnessapp.authentification.userinfo.ProgressRateFragment.formatWeeklyGoal;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -25,8 +26,10 @@ import android.widget.ImageButton;
 import android.widget.ListView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.fitnessapp.MainActivity;
+import com.example.fitnessapp.foodFragments.FoodFragment;
 import com.example.fitnessapp.R;
 import com.example.fitnessapp.authentification.UserActivity;
 import com.google.android.material.bottomsheet.BottomSheetBehavior;
@@ -34,6 +37,8 @@ import com.google.android.material.bottomsheet.BottomSheetDialog;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.w3c.dom.Text;
 
@@ -47,7 +52,7 @@ public class ProfileFragment extends Fragment {
     private SharedPreferences quizPreferences,userPreferences;
     private static final String PREF_KEY_WEIGHT = "CurrentWeight";
     private ImageButton returnHome;
-    private Button signOut;
+    private Button signOut,registerGuest;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -67,6 +72,7 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         initComponents(view);
+        checkForGuestUser();
 
         bottomSheetObjectiveChange();
 
@@ -90,7 +96,9 @@ public class ProfileFragment extends Fragment {
         requireActivity().getSupportFragmentManager().beginTransaction()
                 .remove(fragment)
                 .show(home)
+                //.add(R.id.fragment_container,new HomeFragment(),"Home") //(home)
                 .commit();
+        //((HomeFragment) home).refreshData();
     }
 
     private void signOutUser(){
@@ -111,7 +119,7 @@ public class ProfileFragment extends Fragment {
         String savedName = quizPreferences.getString("FirstName","");
         String savedActivity = quizPreferences.getString("ActivityLevel","");
         String savedGoal = quizPreferences.getString("SelectedGoal","");
-        Double savedProgress = Double.parseDouble(quizPreferences.getString("Progress",""));
+        double savedProgress = Double.parseDouble(quizPreferences.getString("Progress",""));
         Log.d("Progress","Value of savedProgress" + savedProgress);
 
         userSavedWeight.setText(savedWeight + " kg");
@@ -140,6 +148,7 @@ public class ProfileFragment extends Fragment {
         activityTxtView = view.findViewById(R.id.activity_lvl_txt_view);
         goalTxtView = view.findViewById(R.id.goal_text_view);
         signOut = view.findViewById(R.id.sign_out_user_btn);
+        registerGuest = view.findViewById(R.id.register_guest_btn);
     }
 
     private void bottomSheetObjectiveChange() {
@@ -152,14 +161,6 @@ public class ProfileFragment extends Fragment {
         userSavedHeight.setOnClickListener(v ->BottomSheetObjective(blank,userSavedHeight,"Height","Height"));
         userSavedWeight.setOnClickListener(v -> BottomSheetObjective(blank,userSavedWeight,"CurrentWeight","Weight"));
         goalTxtView.setOnClickListener(v -> BottomSheetGoalChange(goalTxtView));
-    }
-
-    private void loadHomeFragment() {
-        FragmentManager fragmentManager = getParentFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.replace(R.id.fragment_container, new HomeFragment());
-        fragmentTransaction.addToBackStack(null);
-        fragmentTransaction.commit();
     }
 
     private void BottomSheetGoalChange(TextView textView){
@@ -189,7 +190,7 @@ public class ProfileFragment extends Fragment {
         loseWeightCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                loseWeightCard.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.light_purple)));
+                loseWeightCard.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.mint_green)));
                 resetColor(maintainWeightCard);
                 resetColor(gainWeightCard);
                 progressBar.setVisibility(View.VISIBLE);
@@ -201,7 +202,7 @@ public class ProfileFragment extends Fragment {
         maintainWeightCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                maintainWeightCard.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.light_purple)));
+                maintainWeightCard.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.mint_green)));
                 resetColor(loseWeightCard);
                 resetColor(gainWeightCard);
                 progressBar.setVisibility(View.GONE);
@@ -213,7 +214,7 @@ public class ProfileFragment extends Fragment {
         gainWeightCard.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                gainWeightCard.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.light_purple)));
+                gainWeightCard.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.mint_green)));
                 resetColor(loseWeightCard);
                 resetColor(maintainWeightCard);
                 progressBar.setVisibility(View.VISIBLE);
@@ -267,6 +268,7 @@ public class ProfileFragment extends Fragment {
             textView.setText(goalText);
 
             refreshObjective();
+            refreshHome();
             bottomSheetDialog.dismiss();
         });
     }
@@ -344,10 +346,16 @@ public class ProfileFragment extends Fragment {
                 textView.setText(weight + " kg");
 
                 refreshObjective();
+                refreshHome();
 
                 bottomSheetDialog.dismiss();
             });
         }
+    }
+
+    private void refreshHome() {
+        Fragment home = requireActivity().getSupportFragmentManager().findFragmentByTag("Home");
+        ((HomeFragment) home).refreshData();
     }
 
     private void refreshObjective() {
@@ -355,5 +363,94 @@ public class ProfileFragment extends Fragment {
             ((MainActivity) getActivity()).calculateDailyIntake(quizPreferences);
             ((MainActivity) getActivity()).insertUserIntoFirestore();
         }
+    }
+
+    private void checkForGuestUser(){
+        if(userPreferences.getString("UserMail","").endsWith("@guest.com")){
+            registerGuest.setVisibility(View.VISIBLE);
+            registerGuest.setOnClickListener(v -> showRegisterDialog());
+        }
+    }
+
+    private void showRegisterDialog() {
+        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
+        View bottomSheetView = LayoutInflater.from(requireContext())
+                .inflate(R.layout.dialog_register_account, null);
+        bottomSheetDialog.setContentView(bottomSheetView);
+
+        FrameLayout bottomSheet = bottomSheetDialog.findViewById(
+                com.google.android.material.R.id.design_bottom_sheet);
+        if (bottomSheet != null) {
+            bottomSheet.getLayoutParams().height = ViewGroup.LayoutParams.MATCH_PARENT;
+            BottomSheetBehavior<View> behavior = BottomSheetBehavior.from(bottomSheet);
+            behavior.setState(BottomSheetBehavior.STATE_EXPANDED);
+            behavior.setSkipCollapsed(true);
+        }
+        bottomSheetDialog.show();
+
+        TextInputEditText emailEdit = bottomSheetView.findViewById(R.id.guest_user_email_input);
+        TextInputEditText passwordEdit = bottomSheetView.findViewById(R.id.guest_user_pass_input);
+        TextInputEditText confirmPasswordEdit = bottomSheetView.findViewById(R.id.guest_user_confirm_pass_input);
+        Button registerBtn = bottomSheetView.findViewById(R.id.guest_user_register_account);
+
+        registerBtn.setOnClickListener(v -> {
+            String email = emailEdit.getText().toString().trim();
+            String password = passwordEdit.getText().toString().trim();
+            String confirmPass = confirmPasswordEdit.getText().toString().trim();
+
+            if (email.isEmpty() || password.isEmpty() || confirmPass.isEmpty()) {
+                Toast.makeText(getContext(), "Fill in all fields", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (!password.equals(confirmPass)) {
+                Toast.makeText(getContext(), "Passwords do not match", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            FirebaseAuth.getInstance().createUserWithEmailAndPassword(email, password)
+                    .addOnSuccessListener(authResult -> {
+                        String oldEmail = userPreferences.getString("UserMail", "Guest");
+                        updateFireStoreAndPreferences(oldEmail, email.toLowerCase(Locale.ROOT));
+                        registerBtn.setVisibility(View.GONE);
+                        bottomSheetDialog.dismiss();
+                    })
+                    .addOnFailureListener(e -> {
+                        Log.e("ProfileFragment", "Error registering guest: " + e.getMessage());
+                        Toast.makeText(getContext(), "Registration failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
+                    });
+        });
+    }
+
+    private void updateFireStoreAndPreferences(String oldEmail, String newEmail) {
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+
+        // Step 1: Copy user data
+        db.collection("Users").document(oldEmail).get().addOnSuccessListener(document -> {
+            if (document.exists()) {
+                db.collection("Users").document(newEmail).set(document.getData())
+                        .addOnSuccessListener(aVoid -> {
+                            // Step 2: Migrate food entries
+                            db.collection("AddedFood")
+                                    .whereEqualTo("userMail", oldEmail)
+                                    .get()
+                                    .addOnSuccessListener(snapshot -> {
+                                        for (DocumentSnapshot doc : snapshot) {
+                                            doc.getReference().update("userMail", newEmail);
+                                        }
+                                    });
+
+                            // Step 3: Delete old guest user (optional)
+                            db.collection("Users").document(oldEmail).delete();
+
+                            // Step 4: Update SharedPreferences
+                            SharedPreferences.Editor editor = userPreferences.edit();
+                            editor.putString("UserMail", newEmail.toLowerCase(Locale.ROOT));
+                            editor.apply();
+
+                            Toast.makeText(getContext(), "Account created! You're now registered.", Toast.LENGTH_SHORT).show();
+                        }).addOnFailureListener(e -> Log.e("ProfileFragment","Error update: " + e.getMessage()));
+            }
+        });
     }
 }

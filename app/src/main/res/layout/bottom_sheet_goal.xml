@@ -128,6 +128,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="8dp"
         android:text="Done"
-        android:textSize="12sp"/>
+        android:textSize="12sp"
+        android:backgroundTint="#3C7D63"/>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

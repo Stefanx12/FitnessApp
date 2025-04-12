@@ -103,6 +103,7 @@
                 android:layout_weight="1"
                 android:background="@drawable/rectangular_form_quiz"
                 android:buttonTint="@color/turqouise"
+                android:layout_marginEnd="6dp"
                 android:buttonTintMode="multiply"/>
 
             <RadioButton
@@ -113,6 +114,7 @@
                 android:layout_weight="1"
                 android:textColor="@color/white"
                 android:background="@drawable/rectangular_form_quiz"
+                android:layout_marginStart="6dp"
                 android:drawableTint="@color/turqouise"
                 android:buttonTintMode="multiply"/>
     </RadioGroup>

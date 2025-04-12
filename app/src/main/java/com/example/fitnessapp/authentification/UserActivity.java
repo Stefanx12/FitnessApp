@@ -19,6 +19,7 @@ import androidx.fragment.app.FragmentTransaction;
 import com.example.fitnessapp.MainActivity;
 import com.example.fitnessapp.R;
 
+import java.util.Locale;
 import java.util.UUID;
 
 public class UserActivity extends AppCompatActivity {
@@ -35,6 +36,7 @@ public class UserActivity extends AppCompatActivity {
 
         initComponents();
     }
+
     private void initComponents() {
         guestBtn = findViewById(R.id.continue_as_guest_button);
         loginButton = findViewById(R.id.login_button);
@@ -48,18 +50,7 @@ public class UserActivity extends AppCompatActivity {
         signUpButton.setOnClickListener(v -> navToSignUp());
         loginButton.setOnClickListener(v -> navToLogIn());
     }
-    private void navToLogInMain() {
-        boolean fromMain = getIntent().getBooleanExtra("from_Main", false);
-        Log.d("UserActivity", "Login Clicked - from_Main: " + fromMain); // Debug log
 
-        Intent intent = new Intent(UserActivity.this, MainActivity.class);
-        if (fromMain) {
-            intent.putExtra("log_in", true);
-        }
-        Log.d("UserActivity", "Starting MainActivity with log_in: " + intent.getBooleanExtra("log_in", false));
-        startActivity(intent);
-        finish();
-    }
     public void returnToUserActivity() {
         FragmentManager fragmentManager = getSupportFragmentManager();
 
@@ -74,25 +65,14 @@ public class UserActivity extends AppCompatActivity {
         loginButton.setVisibility(View.VISIBLE);
         guestBtn.setVisibility(View.VISIBLE);
     }
-    private void navToSignUpMain() {
-        boolean fromMain = getIntent().getBooleanExtra("from_Main", false);
-        Log.d("UserActivity", "Sign Up Clicked - from_Main: " + fromMain);
 
-        Intent intent = new Intent(UserActivity.this, MainActivity.class);
-        if (fromMain) {
-            intent.putExtra("sign_up", true);
-        }
-        Log.d("UserActivity", "Starting MainActivity with sign_up: " + intent.getBooleanExtra("sign_up", false));
-        startActivity(intent);
-        finish();
-    }
     private void generateGuestUser() {
         // Generate and save a new guest user
         guestUserMail = generateGuestMail();
 
         SharedPreferences sharedPreferences = getSharedPreferences("UserSharedPref", MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
-        editor.putString("UserMail", guestUserMail);
+        editor.putString("UserMail", guestUserMail.toLowerCase(Locale.ROOT));
         editor.putBoolean("rememberMe",true);
         editor.apply();
 
@@ -107,9 +87,11 @@ public class UserActivity extends AppCompatActivity {
         startActivity(intent);
         finish();
     }
+
     private String generateGuestMail() {
         return UUID.randomUUID().toString() + "@guest.com";
     }
+
     private void loadFragment(Fragment fragment){
         FragmentManager manager = getSupportFragmentManager();
         FragmentTransaction transaction = manager.beginTransaction();
@@ -117,6 +99,7 @@ public class UserActivity extends AppCompatActivity {
         transaction.addToBackStack(null);
         transaction.commit();
     }
+
     private void changeUI(){
         welcome.setVisibility(View.GONE);
         appName.setVisibility(View.GONE);
@@ -125,6 +108,7 @@ public class UserActivity extends AppCompatActivity {
         loginButton.setVisibility(View.GONE);
         guestBtn.setVisibility(View.GONE);
     }
+
     private void navToSignUp(){
         authFragment fragment = new authFragment();
         Bundle bundle = new Bundle();
@@ -133,6 +117,7 @@ public class UserActivity extends AppCompatActivity {
         changeUI();
         loadFragment(fragment);
     }
+
     private void navToLogIn(){
         authFragment fragment = new authFragment();
         Bundle bundle = new Bundle();

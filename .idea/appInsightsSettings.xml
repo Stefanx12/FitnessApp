@@ -7,6 +7,14 @@
         <entry key="Firebase Crashlytics">
           <value>
             <InsightsFilterSettings>
+              <option name="connection">
+                <ConnectionSetting>
+                  <option name="appId" value="com.example.fitnessapp" />
+                  <option name="mobileSdkAppId" value="1:986608433804:android:b2de7106e4ac993b6a19a9" />
+                  <option name="projectId" value="fitness-app-25169" />
+                  <option name="projectNumber" value="986608433804" />
+                </ConnectionSetting>
+              </option>
               <option name="signal" value="SIGNAL_UNSPECIFIED" />
               <option name="timeIntervalDays" value="THIRTY_DAYS" />
               <option name="visibilityType" value="ALL" />
