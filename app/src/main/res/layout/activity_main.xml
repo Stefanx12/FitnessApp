@@ -31,10 +31,10 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:itemIconTint="@color/lightOrange"
-        app:itemTextColor="@color/lightOrange"
+        app:itemIconTint="#A8E6CF"
+        app:itemTextColor="#A8E6CF"
         app:menu="@menu/bottom_nav_menu"
-        android:background="@color/gray"
+        android:background="#2E4D42"
         android:visibility="visible" />
 
     <androidx.cardview.widget.CardView

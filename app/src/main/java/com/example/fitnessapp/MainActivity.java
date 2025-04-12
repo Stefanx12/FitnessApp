@@ -38,6 +38,7 @@ import android.widget.Toast;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 
@@ -109,9 +110,9 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
-        //checkForUserMailInSharedPreferences();
+        checkForUserMailInSharedPreferences();
         //resetUserSharedPreferences();
-        startQuiz();
+        //startQuiz();
 
 //        boolean sign_up = getIntent().getBooleanExtra("sign_up", false);
 //        boolean log_in = getIntent().getBooleanExtra("log_in", false);
@@ -348,7 +349,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void insertUserIntoFirestore(){
         Map<String,Object> userData = new HashMap<>();
-        String userMail = userSharedPref.getString("UserMail","Guest");
+        String userMail = userSharedPref.getString("UserMail","Guest").toLowerCase(Locale.ROOT);
         userData.put("ActivityLevel", quizPreferences.getString("ActivityLevel", "Moderate"));
         userData.put("Birthday", quizPreferences.getInt("Age", 0));
         userData.put("CaloriesGoal", Double.parseDouble(quizPreferences.getString("MaxCalories","0")));
