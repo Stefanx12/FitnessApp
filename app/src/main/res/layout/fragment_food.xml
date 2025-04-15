@@ -5,7 +5,8 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".foodFragments.FoodFragment"
-    android:background="@drawable/turquoisehomefundal">
+    android:background="@drawable/turquoisehomefundal"
+    android:id="@+id/food_fragmend_id">
 
 
     <androidx.appcompat.widget.SearchView

@@ -5,6 +5,8 @@ import static com.example.fitnessapp.Fragments.HomeFragment.getDailyCalories;
 import android.content.Intent;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -49,6 +51,7 @@ public class MainActivity extends AppCompatActivity {
     private Button nextButton;
     private ImageButton returnButton;
     private int currentStep = 0;
+    private boolean quizProgress = false;
     String selectedActivityLevel;
     SharedPreferences quizPreferences,userSharedPref;
     FirebaseFirestore db;
@@ -110,6 +113,11 @@ public class MainActivity extends AppCompatActivity {
             return true;
         });
 
+        quizProgress = quizPreferences.getBoolean("quiz_in_progress",false);
+        if(quizProgress){
+            startQuiz();
+        }
+
         checkForUserMailInSharedPreferences();
         //resetUserSharedPreferences();
         //startQuiz();
@@ -142,6 +150,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void startQuiz(){
         resetGoalSharedPreferences();
+        quizPreferences.edit().putBoolean("quiz_in_progress",true).apply();
         currentStep = 0;
         bottomNavigationView.setVisibility(View.GONE);
         frameLayout.setVisibility(View.GONE);
@@ -149,7 +158,7 @@ public class MainActivity extends AppCompatActivity {
         cardView.setVisibility(View.VISIBLE);
         nextButton.setVisibility(View.VISIBLE);
         returnButton.setVisibility(View.VISIBLE);
-        loadQuizFragment(quizFragments.get(currentStep));
+        loadQuizFragment(quizFragments.get(currentStep),true);
     }
 
     private void nextStep() {
@@ -178,7 +187,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (currentStep < quizFragments.size()) {
-            loadQuizFragment(quizFragments.get(currentStep));
+            loadQuizFragment(quizFragments.get(currentStep),true);
         } else {
             finishQuiz();
         }
@@ -205,7 +214,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            loadQuizFragment(quizFragments.get(currentStep));
+            loadQuizFragment(quizFragments.get(currentStep),false);
         }
     }
 
@@ -235,6 +244,7 @@ public class MainActivity extends AppCompatActivity {
         }
         addHomeFragment(new HomeFragment(),"Home");
 
+        quizPreferences.edit().putBoolean("quiz_in_progress",false).apply();
         nextButton.setVisibility(View.GONE);
         returnButton.setVisibility(View.GONE);
         bottomNavigationView.setVisibility(View.VISIBLE);
@@ -324,9 +334,16 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.getMenu().setGroupCheckable(0, true, true);
     }
 
-    private void loadQuizFragment(Fragment fragment) {
+    private void loadQuizFragment(Fragment fragment,boolean isNext) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        if(isNext){
+            fragmentTransaction.setCustomAnimations(R.anim.slide_in_right,R.anim.slide_out_left);
+        }else {
+            fragmentTransaction.setCustomAnimations(R.anim.slide_in_left,R.anim.slide_out_right);
+        }
+
         fragmentTransaction.replace(R.id.quiz_fragment_container, fragment);
         fragmentTransaction.commit();
     }
@@ -404,5 +421,39 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("HomeFragment", "Daily Calories: " + dailyCalories);
         Log.d("HomeFragment", "Protein: " + proteinGrams + "g, Fat: " + fatGrams + "g, Carbs: " + carbGrams + "g");
+    }
+
+    public void swipeHome(Fragment fragment){
+        Fragment home = getSupportFragmentManager().findFragmentByTag("Home");
+        getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
+                .remove(fragment)
+                .show(home)
+                .commit();
+    }
+
+    public void enableSwipeToHome(View rootView,Fragment fragment) {
+        GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                float deltaX = e2.getX() - e1.getX();
+                float deltaY = Math.abs(e2.getY() - e1.getY());
+
+                if (deltaX > 150 && deltaY < 100) {
+                    swipeHome(fragment);
+                    enableBottomNav();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        rootView.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
     }
 }

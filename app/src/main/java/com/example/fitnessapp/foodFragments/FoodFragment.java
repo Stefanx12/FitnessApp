@@ -86,6 +86,10 @@ public class FoodFragment extends Fragment {
 
 
         initComponents(view);
+        ((MainActivity) requireActivity()).enableSwipeToHome(view,FoodFragment.this);
+        ((MainActivity) requireActivity()).enableSwipeToHome(searchFoodRecycler, FoodFragment.this);
+        ((MainActivity) requireActivity()).enableSwipeToHome(addedFoodRecycler, FoodFragment.this);
+
 
         addedFoodRecycler.setVisibility(View.VISIBLE);
 
@@ -93,7 +97,8 @@ public class FoodFragment extends Fragment {
 
         returnHome.setOnClickListener(v -> {
             ((MainActivity) getActivity()).enableBottomNav();
-            goHome(FoodFragment.this);
+            ((MainActivity) requireActivity()).swipeHome(FoodFragment.this);
+            //goHome(FoodFragment.this);
         });
 
         apiService = RetrofitClient.getClient().create(ApiService.class);

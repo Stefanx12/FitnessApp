@@ -55,7 +55,7 @@ public class authFragment extends Fragment {
     LinearLayout linearLayout;
     private CheckBox rememberCheckBox;
     private boolean isSignUp,isVisible;
-    SharedPreferences userSharedPref;
+    SharedPreferences userSharedPref,quizPref;
     private static final int RC_SIGN_IN = 100;
     private GoogleSignInClient googleSignInClient;
     private FirebaseAuth mAuth;
@@ -75,7 +75,8 @@ public class authFragment extends Fragment {
         if (getArguments() != null) {
             isSignUp = getArguments().getBoolean("isSignUp",true);
         }
-        userSharedPref = getContext().getSharedPreferences("UserSharedPref", Context.MODE_PRIVATE);
+        userSharedPref = requireContext().getSharedPreferences("UserSharedPref", Context.MODE_PRIVATE);
+        quizPref = requireContext().getSharedPreferences("QuizPreferences",Context.MODE_PRIVATE);
     }
 
     @Override

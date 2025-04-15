@@ -15,7 +15,9 @@ import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
@@ -61,7 +63,7 @@ public class ProfileFragment extends Fragment {
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        quizPreferences = getContext().getSharedPreferences("QuizPreferences", Context.MODE_PRIVATE);
+        quizPreferences = requireContext().getSharedPreferences("QuizPreferences", Context.MODE_PRIVATE);
         userPreferences = requireContext().getSharedPreferences("UserSharedPref",Context.MODE_PRIVATE);
     }
 
@@ -72,6 +74,7 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         initComponents(view);
+        ((MainActivity) requireActivity()).enableSwipeToHome(view,ProfileFragment.this);
         checkForGuestUser();
 
         bottomSheetObjectiveChange();
@@ -81,7 +84,8 @@ public class ProfileFragment extends Fragment {
         returnHome.setOnClickListener(v ->{
             //MainActivity mainActivity = (MainActivity) getActivity();
             //mainActivity.switchToFragment(mainActivity.homeFragment);
-            goHome(ProfileFragment.this);
+            //goHome(ProfileFragment.this);
+            ((MainActivity) requireActivity()).swipeHome(ProfileFragment.this);
             //loadHomeFragment();
             ((MainActivity) getActivity()).enableBottomNav();
         });
