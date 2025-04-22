@@ -18,6 +18,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentTransaction;
 
 import com.example.fitnessapp.Fragments.HomeFragment;
+import com.example.fitnessapp.Fragments.ProgressFragment;
 import com.example.fitnessapp.R;
 import com.example.fitnessapp.foodFragments.FoodFragment;
 import com.google.android.material.textfield.TextInputEditText;
@@ -285,11 +286,19 @@ public class FoodDetailFragment extends Fragment {
 
     private void navigateToFragment() {
         refreshHome();
+        //refreshProgress();
         FoodFragment foodFragment = FoodFragment.newInstance(foodType);
         FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
         transaction.add(R.id.fragment_container, foodFragment);
         transaction.remove(FoodDetailFragment.this);
         transaction.commit();
+    }
+
+    private void refreshProgress(){
+        Fragment progress = requireActivity().getSupportFragmentManager().findFragmentByTag("Progress");
+        if(progress instanceof ProgressFragment){
+            ((ProgressFragment) progress).getMacrosDB();
+        }
     }
 
     private void refreshHome() {

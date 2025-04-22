@@ -1,10 +1,13 @@
 package com.example.fitnessapp.Fragments;
 
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Path;
 import android.graphics.RectF;
+import android.view.View;
 
+import com.example.fitnessapp.R;
 import com.github.mikephil.charting.animation.ChartAnimator;
 import com.github.mikephil.charting.buffer.BarBuffer;
 import com.github.mikephil.charting.data.BarData;
@@ -14,6 +17,8 @@ import com.github.mikephil.charting.interfaces.datasets.IBarDataSet;
 import com.github.mikephil.charting.renderer.BarChartRenderer;
 import com.github.mikephil.charting.utils.Transformer;
 import com.github.mikephil.charting.utils.ViewPortHandler;
+
+import java.util.Calendar;
 
 public class RoundedBarChartRenderer extends BarChartRenderer {
 
@@ -27,7 +32,6 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
     @Override
     public void drawDataSet(Canvas c, IBarDataSet dataSet, int index) {
         mRenderPaint.setStyle(Paint.Style.FILL);
-
         Transformer trans = mChart.getTransformer(dataSet.getAxisDependency());
 
         for (int i = 0; i < dataSet.getEntryCount(); i++) {
@@ -35,54 +39,33 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
             if (entry == null) continue;
 
             float x = entry.getX();
-            float barWidth = mChart.getBarData().getBarWidth();
-            float halfBarWidth = barWidth / 2f;
+            float halfBarWidth = mChart.getBarData().getBarWidth() / 2f;
 
             float[] yVals = entry.getYVals();
 
             if (yVals == null) {
-                // Not stacked bar
-                float y = entry.getY();
-                float top = Math.max(y, 0);
-                float bottom = Math.min(y, 0);
-
-                mBarRect.set(x - halfBarWidth, bottom, x + halfBarWidth, top);
+                // Single-value bar
+                mBarRect.set(x - halfBarWidth, Math.min(0, entry.getY()), x + halfBarWidth, Math.max(0, entry.getY()));
                 trans.rectToPixelPhase(mBarRect, mAnimator.getPhaseY());
-
-                drawFullyRoundedBar(c, mBarRect, mRenderPaint, radius);
+                drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.FULL);
             } else {
-                // Stacked bar
-                float posY = 0f;
-                float negY = 0f;
-
+                float posY = 0f, negY = 0f;
                 for (int j = 0; j < yVals.length; j++) {
                     float y = yVals[j];
-
                     float startY = y >= 0 ? posY : negY;
                     float endY = startY + y;
+                    if (y >= 0) posY = endY; else negY = endY;
 
-                    if (y >= 0)
-                        posY = endY;
-                    else
-                        negY = endY;
-
-                    float top = Math.max(startY, endY);
-                    float bottom = Math.min(startY, endY);
-
-                    mBarRect.set(x - halfBarWidth, bottom, x + halfBarWidth, top);
+                    mBarRect.set(x - halfBarWidth, Math.min(startY, endY), x + halfBarWidth, Math.max(startY, endY));
                     trans.rectToPixelPhase(mBarRect, mAnimator.getPhaseY());
-
                     mRenderPaint.setColor(dataSet.getColor(j));
 
-                    boolean isFirst = j == 0;
-                    boolean isLast = j == yVals.length - 1;
-
-                    if (isFirst && isLast) {
-                        drawFullyRoundedBar(c, mBarRect, mRenderPaint, radius);
-                    } else if (isFirst) {
-                        drawBottomRoundedBar(c, mBarRect, mRenderPaint, radius);
-                    } else if (isLast) {
-                        drawTopRoundedBar(c, mBarRect, mRenderPaint, radius);
+                    if (yVals.length == 1) {
+                        drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.FULL);
+                    } else if (j == 0) {
+                        drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.BOTTOM);
+                    } else if (j == yVals.length - 1) {
+                        drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.TOP);
                     } else {
                         c.drawRect(mBarRect, mRenderPaint);
                     }
@@ -91,50 +74,85 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
         }
     }
 
-    private void drawFullyRoundedBar(Canvas c, RectF barRect, Paint paint, float radius) {
-        Path path = new Path();
-        path.addRoundRect(barRect, new float[]{
-                radius, radius,   // top-left, top-right
-                radius, radius,   // bottom-right, bottom-left
-                radius, radius,   // not used
-                radius, radius    // not used
-        }, Path.Direction.CW);
-        c.drawPath(path, paint);
-    }
+    private enum CornerStyle { FULL, TOP, BOTTOM }
 
-    private void drawTopRoundedBar(Canvas c, RectF barRect, Paint paint, float radius) {
+    private void drawRoundedRect(Canvas c, RectF rect, Paint paint, CornerStyle style) {
+        float[] radii;
+        switch (style) {
+            case TOP:
+                radii = new float[]{radius, radius, radius, radius, 0, 0, 0, 0};
+                break;
+            case BOTTOM:
+                radii = new float[]{0, 0, 0, 0, radius, radius, radius, radius};
+                break;
+            case FULL:
+            default:
+                radii = new float[]{radius, radius, radius, radius, radius, radius, radius, radius};
+                break;
+        }
         Path path = new Path();
-        path.addRoundRect(barRect, new float[]{
-                radius, radius,  // top-left, top-right
-                radius, radius,  // bottom-right, bottom-left (set to 0 if flat bottom desired)
-                0, 0, 0, 0
-        }, Path.Direction.CW);
-        c.drawPath(path, paint);
-    }
-
-    private void drawBottomRoundedBar(Canvas c, RectF barRect, Paint paint, float radius) {
-        Path path = new Path();
-        path.addRoundRect(barRect, new float[]{
-                0, 0,          // top-left, top-right
-                0, 0,          // bottom-right, bottom-left
-                radius, radius,
-                radius, radius
-        }, Path.Direction.CW);
+        path.addRoundRect(rect, radii, Path.Direction.CW);
         c.drawPath(path, paint);
     }
 
     @Override
     public void initBuffers() {
         BarData barData = mChart.getBarData();
-        mBarBuffers = new BarBuffer[barData.getDataSetCount()];
+        int count = barData.getDataSetCount();
+        mBarBuffers = new BarBuffer[count];
 
-        for (int i = 0; i < mBarBuffers.length; i++) {
+        for (int i = 0; i < count; i++) {
             IBarDataSet set = barData.getDataSetByIndex(i);
-            mBarBuffers[i] = new BarBuffer(
-                    set.getEntryCount() * (set.isStacked() ? 4 * set.getStackSize() : 4),
-                    barData.getDataSetCount(),
-                    set.isStacked()
-            );
+            int size = set.getEntryCount() * (set.isStacked() ? 4 * set.getStackSize() : 4);
+            mBarBuffers[i] = new BarBuffer(size, count, set.isStacked());
+        }
+    }
+
+    @Override
+    public void drawExtras(Canvas c) {
+        super.drawExtras(c);
+
+        if (mChart instanceof View && ((View) mChart).getId() == R.id.calories_bar_chart) {
+            BarData barData = mChart.getBarData();
+            if (barData == null) return;
+
+            float contentTop = mViewPortHandler.contentTop();
+            float contentBottom = mViewPortHandler.contentBottom();
+            float lineY = contentBottom - (contentBottom - contentTop) * (100f / 120f);
+
+            Paint paint = new Paint();
+            paint.setColor(Color.GREEN);
+            paint.setStrokeWidth(6f); // thicker so it looks nice
+            paint.setAntiAlias(true);
+
+            int dataSetCount = barData.getDataSetCount();
+
+            for (int i = 0; i < dataSetCount; i++) {
+                IBarDataSet dataSet = barData.getDataSetByIndex(i);
+
+                for (int j = 0; j < dataSet.getEntryCount(); j++) {
+                    BarEntry entry = dataSet.getEntryForIndex(j);
+
+                    if (entry == null) continue;
+
+                    float x = entry.getX();
+                    Transformer transformer = mChart.getTransformer(dataSet.getAxisDependency());
+                    float[] pts = new float[]{x, 0};
+                    transformer.pointValuesToPixel(pts);
+
+                    float barWidth = barData.getBarWidth();
+                    float halfBarWidth = (barWidth / 2f) * mViewPortHandler.getContentRect().width() / 7f; // 7 days
+
+                    // Draw a short green line only above this bar
+                    c.drawLine(
+                            pts[0] - halfBarWidth + 10f, // left side (a little inside)
+                            lineY,
+                            pts[0] + halfBarWidth - 10f, // right side (a little inside)
+                            lineY,
+                            paint
+                    );
+                }
+            }
         }
     }
 }

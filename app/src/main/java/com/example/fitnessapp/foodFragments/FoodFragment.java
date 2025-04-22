@@ -86,10 +86,6 @@ public class FoodFragment extends Fragment {
 
 
         initComponents(view);
-        ((MainActivity) requireActivity()).enableSwipeToHome(view,FoodFragment.this);
-        ((MainActivity) requireActivity()).enableSwipeToHome(searchFoodRecycler, FoodFragment.this);
-        ((MainActivity) requireActivity()).enableSwipeToHome(addedFoodRecycler, FoodFragment.this);
-
 
         addedFoodRecycler.setVisibility(View.VISIBLE);
 

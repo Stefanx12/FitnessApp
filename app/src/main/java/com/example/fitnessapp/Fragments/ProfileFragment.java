@@ -55,6 +55,7 @@ public class ProfileFragment extends Fragment {
     private static final String PREF_KEY_WEIGHT = "CurrentWeight";
     private ImageButton returnHome;
     private Button signOut,registerGuest;
+    private String savedGoal,savedWeight = "";
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -82,27 +83,13 @@ public class ProfileFragment extends Fragment {
         signOut.setOnClickListener(v -> signOutUser());
 
         returnHome.setOnClickListener(v ->{
-            //MainActivity mainActivity = (MainActivity) getActivity();
-            //mainActivity.switchToFragment(mainActivity.homeFragment);
-            //goHome(ProfileFragment.this);
             ((MainActivity) requireActivity()).swipeHome(ProfileFragment.this);
-            //loadHomeFragment();
             ((MainActivity) getActivity()).enableBottomNav();
         });
 
         userSavedObjective();
 
         return view;
-    }
-
-    private void goHome(Fragment fragment){
-        Fragment home = requireActivity().getSupportFragmentManager().findFragmentByTag("Home");
-        requireActivity().getSupportFragmentManager().beginTransaction()
-                .remove(fragment)
-                .show(home)
-                //.add(R.id.fragment_container,new HomeFragment(),"Home") //(home)
-                .commit();
-        //((HomeFragment) home).refreshData();
     }
 
     private void signOutUser(){
@@ -117,12 +104,12 @@ public class ProfileFragment extends Fragment {
 
     private void userSavedObjective() {
         String savedGender = quizPreferences.getString("Gender","");
-        String savedWeight = quizPreferences.getString(PREF_KEY_WEIGHT, "");
+        savedWeight = quizPreferences.getString(PREF_KEY_WEIGHT, "");
         String savedHeight = quizPreferences.getString("Height","");
         int savedAge = quizPreferences.getInt("Age",0);
         String savedName = quizPreferences.getString("FirstName","");
         String savedActivity = quizPreferences.getString("ActivityLevel","");
-        String savedGoal = quizPreferences.getString("SelectedGoal","");
+        savedGoal = quizPreferences.getString("SelectedGoal","");
         double savedProgress = Double.parseDouble(quizPreferences.getString("Progress",""));
         Log.d("Progress","Value of savedProgress" + savedProgress);
 
@@ -164,6 +151,7 @@ public class ProfileFragment extends Fragment {
         activityTxtView.setOnClickListener(v -> BottomSheetObjective(activityOptions,activityTxtView,"ActivityLevel","Activity level"));
         userSavedHeight.setOnClickListener(v ->BottomSheetObjective(blank,userSavedHeight,"Height","Height"));
         userSavedWeight.setOnClickListener(v -> BottomSheetObjective(blank,userSavedWeight,"CurrentWeight","Weight"));
+        userSavedAge.setOnClickListener(v -> BottomSheetObjective(blank,userSavedAge,"Age","Age"));
         goalTxtView.setOnClickListener(v -> BottomSheetGoalChange(goalTxtView));
     }
 
@@ -276,9 +264,11 @@ public class ProfileFragment extends Fragment {
             bottomSheetDialog.dismiss();
         });
     }
+
     private void resetColor(CardView cardView){
         cardView.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.white)));
     }
+
     private void BottomSheetObjective(List<String> options,TextView textView,String quizKey,String title){
         BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(requireContext());
         View bottomSheetView = LayoutInflater.from(requireContext()).inflate(R.layout.bottom_sheet_options,null);
@@ -300,18 +290,30 @@ public class ProfileFragment extends Fragment {
 
         changeWeightAndHeight(textView, quizKey, optionsListView, layout, userEditTxt, saveOption, editor, bottomSheetDialog);
 
+        final View[] selectedView = {null};
+
         optionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
                 String selectedOption = (String) adapterView.getItemAtPosition(position);
 
+                view.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.mint_green)));
+
+                if (selectedView[0] != null && selectedView[0] != view) {
+                    selectedView[0].setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.white)));
+                }
+
+                selectedView[0] = view;
+
                 saveOption.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
-                        editor.putString(quizKey,selectedOption);
+                        editor.putString(quizKey, selectedOption);
                         editor.apply();
 
                         refreshObjective();
+                        refreshHome();
+
                         bottomSheetDialog.dismiss();
                         textView.setText(selectedOption);
                     }
@@ -333,6 +335,7 @@ public class ProfileFragment extends Fragment {
                 textView.setText(height + " cm");
 
                 refreshObjective();
+                refreshHome();
 
                 bottomSheetDialog.dismiss();
             });
@@ -343,11 +346,47 @@ public class ProfileFragment extends Fragment {
             userEditTxt.setVisibility(View.VISIBLE);
 
             saveOption.setOnClickListener(v ->  {
-                String weight = userEditTxt.getText().toString().trim();
-                Log.d("ProfileFragment","Weight: " + weight);
-                editor.putString(quizKey,weight);
+                String weightString = userEditTxt.getText().toString().trim();
+
+                if (weightString.isEmpty()) {
+                    Toast.makeText(requireContext(), "Please enter a valid weight", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                double newWeight = Double.parseDouble(weightString);
+                double oldWeight = Double.parseDouble(savedWeight);
+
+                if (savedGoal.equals("Lose Weight") && newWeight >= oldWeight) {
+                    Toast.makeText(requireContext(), "For 'Lose Weight' goal, the new weight must be lower.", Toast.LENGTH_SHORT).show();
+                    return;
+                } else if (savedGoal.equals("Gain Weight") && newWeight <= oldWeight) {
+                    Toast.makeText(requireContext(), "For 'Gain Weight' goal, the new weight must be higher.", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Log.d("ProfileFragment","Weight: " + newWeight);
+                editor.putString(quizKey, weightString);
                 editor.apply();
-                textView.setText(weight + " kg");
+                textView.setText(weightString + " kg");
+
+                refreshObjective();
+                refreshHome();
+                ((MainActivity) requireActivity()).addWeightToHistory(newWeight);
+
+                bottomSheetDialog.dismiss();
+            });
+        }else if(textView.getId() == R.id.user_saved_age_txt_view){
+            optionsListView.setVisibility(View.GONE);
+            layout.setVisibility(View.VISIBLE);
+            layout.setHint("Write age");
+            userEditTxt.setVisibility(View.VISIBLE);
+
+            saveOption.setOnClickListener(v ->  {
+                String age = userEditTxt.getText().toString().trim();
+                Log.d("ProfileFragment","Age: " + age);
+                editor.putInt(quizKey,Integer.parseInt(age));
+                editor.apply();
+                textView.setText(age + " years");
 
                 refreshObjective();
                 refreshHome();
@@ -429,12 +468,12 @@ public class ProfileFragment extends Fragment {
     private void updateFireStoreAndPreferences(String oldEmail, String newEmail) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
-        // Step 1: Copy user data
+        // Copy user data
         db.collection("Users").document(oldEmail).get().addOnSuccessListener(document -> {
             if (document.exists()) {
                 db.collection("Users").document(newEmail).set(document.getData())
                         .addOnSuccessListener(aVoid -> {
-                            // Step 2: Migrate food entries
+                            // Migrate food entries
                             db.collection("AddedFood")
                                     .whereEqualTo("userMail", oldEmail)
                                     .get()
@@ -444,10 +483,10 @@ public class ProfileFragment extends Fragment {
                                         }
                                     });
 
-                            // Step 3: Delete old guest user (optional)
+                            // Delete old guest user
                             db.collection("Users").document(oldEmail).delete();
 
-                            // Step 4: Update SharedPreferences
+                            // Update SharedPreferences
                             SharedPreferences.Editor editor = userPreferences.edit();
                             editor.putString("UserMail", newEmail.toLowerCase(Locale.ROOT));
                             editor.apply();

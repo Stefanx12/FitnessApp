@@ -107,6 +107,8 @@ public class MainActivity extends AppCompatActivity {
                             .hide(homeFragment)
                             .show(progress)
                             .commit();
+                    ((ProgressFragment) progress).getMacrosDB();
+                    ((ProgressFragment) progress).getCaloriesDB();
                 }
             }
 
@@ -121,25 +123,6 @@ public class MainActivity extends AppCompatActivity {
         checkForUserMailInSharedPreferences();
         //resetUserSharedPreferences();
         //startQuiz();
-
-//        boolean sign_up = getIntent().getBooleanExtra("sign_up", false);
-//        boolean log_in = getIntent().getBooleanExtra("log_in", false);
-//
-//        //Log.d("MainActivity", "Received sign_up: " + sign_up + ", log_in: " + log_in);
-//
-//        if (sign_up) {
-//            bottomNavigationView.setVisibility(View.GONE);
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.fragment_container,new authFragment())
-//                    .commit();
-//            //loadFragment(new authFragment());
-//            Log.d("MainActivity", "Sign Up Fragment Loaded");
-//        }
-//
-//        if (log_in) {
-//            Log.d("MainActivity", "Log-In Pressed - Loading HomeFragment");
-//            loadFragment(new HomeFragment());
-//        }
 
         boolean openQuiz = getIntent().getBooleanExtra("quizFragment", false);
         Log.d("MainActivity","Open Quiz: " + openQuiz);
@@ -252,6 +235,7 @@ public class MainActivity extends AppCompatActivity {
         cardView.setVisibility(View.GONE);
         quizLayout.setVisibility(View.GONE);
         insertUserIntoFirestore();
+        saveInitialWeightToHistory();
     }
 
     private void checkForUserMailInSharedPreferences() {
@@ -313,11 +297,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resetUserSharedPreferences() {
-        SharedPreferences sharedPreferences = getSharedPreferences("UserSharedPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        editor.clear();
-        editor.apply();
+        quizPreferences.edit().clear().apply();
+        userSharedPref.edit().clear().apply();
 
         Log.d("MainActivity", "App reset to first launch state.");
 
@@ -358,6 +339,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void enableBottomNav(){
         bottomNavigationView.setVisibility(View.VISIBLE);
+        bottomNavigationView.setSelectedItemId(R.id.nav_home);
     }
 
     public void setSelectedActivityLevel(String selectedActivityLevel) {
@@ -456,4 +438,34 @@ public class MainActivity extends AppCompatActivity {
 
         rootView.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
     }
+
+    private void saveInitialWeightToHistory() {
+        String userMail = userSharedPref.getString("UserMail", "Guest").toLowerCase(Locale.ROOT);
+        double initialWeight = Double.parseDouble(quizPreferences.getString("CurrentWeight", "0"));
+
+        Map<String, Object> weightEntry = new HashMap<>();
+        weightEntry.put("userMail", userMail);
+        weightEntry.put("weight", initialWeight);
+        weightEntry.put("timestamp", com.google.firebase.Timestamp.now());
+
+        db.collection("WeightHistory")
+                .add(weightEntry)
+                .addOnSuccessListener(documentReference -> Log.d("MainActivity", "Initial weight saved to history"))
+                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to save initial weight: " + e.getMessage()));
+    }
+
+    public void addWeightToHistory(double newWeight) {
+        String userMail = userSharedPref.getString("UserMail", "Guest").toLowerCase(Locale.ROOT);
+
+        Map<String, Object> weightEntry = new HashMap<>();
+        weightEntry.put("userMail", userMail);
+        weightEntry.put("weight", newWeight);
+        weightEntry.put("timestamp", com.google.firebase.Timestamp.now());
+
+        db.collection("WeightHistory")
+                .add(weightEntry)
+                .addOnSuccessListener(documentReference -> Log.d("ProfileFragment", "New weight saved"))
+                .addOnFailureListener(e -> Log.e("ProfileFragment", "Failed to save new weight: " + e.getMessage()));
+    }
+
 }
