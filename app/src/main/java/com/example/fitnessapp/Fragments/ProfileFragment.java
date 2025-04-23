@@ -2,18 +2,29 @@ package com.example.fitnessapp.Fragments;
 
 import static com.example.fitnessapp.authentification.userinfo.ProgressRateFragment.formatWeeklyGoal;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.net.Uri;
 import android.os.Bundle;
+import android.Manifest;
 
 import androidx.cardview.widget.CardView;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import android.provider.MediaStore;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.text.InputType;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.LayoutInflater;
@@ -44,6 +55,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.w3c.dom.Text;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -53,9 +65,12 @@ public class ProfileFragment extends Fragment {
     private TextView genderTxtView,activityTxtView,goalTxtView,userSavedWeight,userSavedHeight,userSavedAge,userSavedName;
     private SharedPreferences quizPreferences,userPreferences;
     private static final String PREF_KEY_WEIGHT = "CurrentWeight";
-    private ImageButton returnHome;
+    private ImageButton returnHome,addUserPhoto;
     private Button signOut,registerGuest;
     private String savedGoal,savedWeight = "";
+    private static final int CAMERA_REQUEST_CODE = 100;
+    private static final int GALLERY_REQUEST_CODE = 101;
+    private Uri cameraImageUri;
 
     public ProfileFragment() {
         // Required empty public constructor
@@ -75,8 +90,13 @@ public class ProfileFragment extends Fragment {
         View view = inflater.inflate(R.layout.fragment_profile, container, false);
 
         initComponents(view);
+//        String savedUri = userPreferences.getString("profileImageUri", null);
+//        if (savedUri != null) {
+//            addUserPhoto.setImageURI(Uri.parse(savedUri));
+//        }
         ((MainActivity) requireActivity()).enableSwipeToHome(view,ProfileFragment.this);
         checkForGuestUser();
+        //userPhoto();
 
         bottomSheetObjectiveChange();
 
@@ -92,14 +112,36 @@ public class ProfileFragment extends Fragment {
         return view;
     }
 
-    private void signOutUser(){
+    private void signOutUser() {
+        String currentUser = userPreferences.getString("UserMail", "");
+
+        if (currentUser.endsWith("@guest.com")) {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle("Warning")
+                    .setMessage("If you sign out, your data will be lost and cannot be restored. Are you sure you want to continue?")
+                    .setPositiveButton("Yes", (dialog, which) -> {
+                        performSignOut();
+                    })
+                    .setNegativeButton("No", (dialog, which) -> {
+                        dialog.dismiss();
+                    })
+                    .setCancelable(false)
+                    .show();
+        } else {
+            performSignOut();
+        }
+    }
+
+    private void performSignOut() {
         userPreferences.edit().clear().apply();
         quizPreferences.edit().clear().apply();
         FirebaseAuth.getInstance().signOut();
 
-        Intent intent = new Intent(requireContext(), MainActivity.class);
+        Intent intent = new Intent(requireContext(), UserActivity.class);
+        intent.putExtra("fromSignOut", true);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(intent);
+        requireActivity().finishAffinity();
     }
 
     private void userSavedObjective() {
@@ -140,6 +182,92 @@ public class ProfileFragment extends Fragment {
         goalTxtView = view.findViewById(R.id.goal_text_view);
         signOut = view.findViewById(R.id.sign_out_user_btn);
         registerGuest = view.findViewById(R.id.register_guest_btn);
+        addUserPhoto = view.findViewById(R.id.add_user_image_btn);
+    }
+
+    private void userPhoto(){
+        addUserPhoto.setOnClickListener(v -> {
+            if (ContextCompat.checkSelfPermission(requireContext(), Manifest.permission.CAMERA)
+                    != PackageManager.PERMISSION_GRANTED) {
+                // Request permission
+                ActivityCompat.requestPermissions(requireActivity(),
+                        new String[]{Manifest.permission.CAMERA},
+                        CAMERA_REQUEST_CODE);
+            } else {
+                // Permission already granted
+                showImageSourceDialog();
+            }
+        });
+
+    }
+
+    private void showImageSourceDialog() {
+        String[] options = {"Take Photo", "Choose from Gallery"};
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Select Image")
+                .setItems(options, (dialog, which) -> {
+                    if (which == 0) {
+                        openCamera();
+                    } else {
+                        openGallery();
+                    }
+                })
+                .show();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == CAMERA_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                showImageSourceDialog();
+            } else {
+                Toast.makeText(requireContext(), "Camera permission is required", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    private void openCamera() {
+        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        File photoFile = new File(requireContext().getExternalCacheDir(), "user_photo.jpg");
+        cameraImageUri = FileProvider.getUriForFile(
+                requireContext(),
+                requireContext().getPackageName() + ".provider",
+                photoFile
+        );
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, cameraImageUri);
+        intent.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        startActivityForResult(intent, CAMERA_REQUEST_CODE);
+    }
+
+    private void openGallery() {
+        Intent intent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+        intent.setType("image/*");
+        startActivityForResult(intent, GALLERY_REQUEST_CODE);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (resultCode == Activity.RESULT_OK) {
+            Uri imageUri = null;
+
+            if (requestCode == GALLERY_REQUEST_CODE && data != null) {
+                imageUri = data.getData();
+            } else if (requestCode == CAMERA_REQUEST_CODE) {
+                imageUri = cameraImageUri;
+            }
+
+            if (imageUri != null) {
+                addUserPhoto.setImageURI(imageUri); // display image
+
+                // Save to SharedPreferences
+                userPreferences.edit()
+                        .putString("profileImageUri", imageUri.toString())
+                        .apply();
+            }
+        }
     }
 
     private void bottomSheetObjectiveChange() {
@@ -283,42 +411,26 @@ public class ProfileFragment extends Fragment {
         TextInputLayout layout = bottomSheetView.findViewById(R.id.user_input_layout);
 
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(requireContext(), android.R.layout.simple_list_item_1, options);
+        ArrayAdapter<String> adapter = new ProfileAdapter(requireContext(), options);
         optionsListView.setAdapter(adapter);
 
         titleTextView.setText(title);
 
         changeWeightAndHeight(textView, quizKey, optionsListView, layout, userEditTxt, saveOption, editor, bottomSheetDialog);
 
-        final View[] selectedView = {null};
 
-        optionsListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> adapterView, View view, int position, long l) {
-                String selectedOption = (String) adapterView.getItemAtPosition(position);
+        optionsListView.setOnItemClickListener((adapterView, view, position, l) -> {
+            String selectedOption = adapter.getItem(position);
+            ((ProfileAdapter) adapter).setSelectedPosition(position);
 
-                view.setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.mint_green)));
-
-                if (selectedView[0] != null && selectedView[0] != view) {
-                    selectedView[0].setBackgroundTintList(ColorStateList.valueOf(getResources().getColor(R.color.white)));
-                }
-
-                selectedView[0] = view;
-
-                saveOption.setOnClickListener(new View.OnClickListener() {
-                    @Override
-                    public void onClick(View view) {
-                        editor.putString(quizKey, selectedOption);
-                        editor.apply();
-
-                        refreshObjective();
-                        refreshHome();
-
-                        bottomSheetDialog.dismiss();
-                        textView.setText(selectedOption);
-                    }
-                });
-            }
+            saveOption.setOnClickListener(v -> {
+                editor.putString(quizKey, selectedOption);
+                editor.apply();
+                refreshObjective();
+                refreshHome();
+                bottomSheetDialog.dismiss();
+                textView.setText(selectedOption);
+            });
         });
     }
 
@@ -435,6 +547,21 @@ public class ProfileFragment extends Fragment {
         TextInputEditText passwordEdit = bottomSheetView.findViewById(R.id.guest_user_pass_input);
         TextInputEditText confirmPasswordEdit = bottomSheetView.findViewById(R.id.guest_user_confirm_pass_input);
         Button registerBtn = bottomSheetView.findViewById(R.id.guest_user_register_account);
+        ImageButton showPass = bottomSheetView.findViewById(R.id.show_pass_register_img_btn);
+        ImageButton showConfirmPass = bottomSheetView.findViewById(R.id.show_confirm_pass_register_img_btn);
+
+        final boolean[] isPasswordVisible = {false};
+        final boolean[] isConfirmPasswordVisible = {false};
+
+        showPass.setOnClickListener(v -> {
+            isPasswordVisible[0] = !isPasswordVisible[0];
+            togglePassVisibility(passwordEdit, isPasswordVisible[0]);
+        });
+
+        showConfirmPass.setOnClickListener(v -> {
+            isConfirmPasswordVisible[0] = !isConfirmPasswordVisible[0];
+            togglePassVisibility(confirmPasswordEdit, isConfirmPasswordVisible[0]);
+        });
 
         registerBtn.setOnClickListener(v -> {
             String email = emailEdit.getText().toString().trim();
@@ -463,6 +590,15 @@ public class ProfileFragment extends Fragment {
                         Toast.makeText(getContext(), "Registration failed: " + e.getMessage(), Toast.LENGTH_LONG).show();
                     });
         });
+    }
+
+    private void togglePassVisibility(TextInputEditText editText, boolean isVisible) {
+        if (isVisible) {
+            editText.setInputType(InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD);
+        } else {
+            editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        }
+        editText.setSelection(editText.getText().length());
     }
 
     private void updateFireStoreAndPreferences(String oldEmail, String newEmail) {

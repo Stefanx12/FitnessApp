@@ -60,7 +60,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintTop_toTopOf="parent"
                 android:src="@drawable/baseline_arrow_back_24"
-                android:backgroundTint="#c19876"
+                android:backgroundTint="#3C7D63"
                 android:visibility="visible"
                 android:layout_marginBottom="5dp"
                 android:layout_marginTop="5dp"/>

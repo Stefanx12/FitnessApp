@@ -4,6 +4,9 @@ import static com.example.fitnessapp.Fragments.HomeFragment.getDailyCalories;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.InputType;
 import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -29,6 +32,7 @@ import com.example.fitnessapp.authentification.userinfo.ProgressRateFragment;
 import com.example.fitnessapp.authentification.userinfo.QuizData;
 import com.example.fitnessapp.authentification.authFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -109,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                             .commit();
                     ((ProgressFragment) progress).getMacrosDB();
                     ((ProgressFragment) progress).getCaloriesDB();
+                    ((ProgressFragment) progress).getWeightHistory();
                 }
             }
 
@@ -120,7 +125,9 @@ public class MainActivity extends AppCompatActivity {
             startQuiz();
         }
 
-        checkForUserMailInSharedPreferences();
+        if (!getIntent().getBooleanExtra("fromSignOut", false)) {
+            checkForUserMailInSharedPreferences();
+        }
         //resetUserSharedPreferences();
         //startQuiz();
 
@@ -256,9 +263,11 @@ public class MainActivity extends AppCompatActivity {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString("UserMail",user.getEmail());
             editor.apply();
+            //addSpashScreen();
             addHomeFragment(homeFragment,"Home");
         }else{
-            addHomeFragment(homeFragment,"Home");
+            addSpashScreen();
+            //addHomeFragment(homeFragment,"Home");
         }
     }
 
@@ -279,11 +288,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        SharedPreferences sharedPreferences = getSharedPreferences("UserSharedPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        boolean rememberMe = sharedPreferences.getBoolean("rememberMe",false);
+        SharedPreferences.Editor editor = userSharedPref.edit();
+        boolean rememberMe = userSharedPref.getBoolean("rememberMe",false);
         if(!rememberMe){
-            editor.remove("UserMail");
+            resetUserSharedPreferences();
+            //editor.remove("UserMail");
         }
         editor.apply();
     }
@@ -302,9 +311,9 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("MainActivity", "App reset to first launch state.");
 
-        Intent intent = new Intent(MainActivity.this, UserActivity.class);
-        startActivity(intent);
-        finish();
+//        Intent intent = new Intent(MainActivity.this, UserActivity.class);
+//        startActivity(intent);
+//        finish();
     }
 
     public void deselectBottomNavItems() {
@@ -468,4 +477,34 @@ public class MainActivity extends AppCompatActivity {
                 .addOnFailureListener(e -> Log.e("ProfileFragment", "Failed to save new weight: " + e.getMessage()));
     }
 
+    private void addSpashScreen(){
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragment_container,new SplashScreen(),"Splash")
+                .commit();
+        disableBottomNav();
+        new Handler(Looper.getMainLooper()).postDelayed(this::loadHomeFragment, 2500);
+    }
+
+    private void loadHomeFragment() {
+        String userMail = userSharedPref.getString("UserMail", "Guest").toLowerCase(Locale.ROOT);
+
+        db.collection("Users").document(userMail).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.fragment_container, homeFragment, "Home")
+                                    .commit();
+                            enableBottomNav();
+                        }, 1000);
+
+                    } else {
+                        Log.e("SplashScreen", "User data not found");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to load user data", Toast.LENGTH_SHORT).show();
+                    Log.e("SplashScreen", "Firestore error: " + e.getMessage());
+                });
+    }
 }

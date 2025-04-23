@@ -8,11 +8,13 @@ import android.os.Handler;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
+import com.example.fitnessapp.MainActivity;
 import com.example.fitnessapp.R;
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.BarChart;
@@ -23,6 +25,9 @@ import com.github.mikephil.charting.components.XAxis;
 import com.github.mikephil.charting.data.BarData;
 import com.github.mikephil.charting.data.BarDataSet;
 import com.github.mikephil.charting.data.BarEntry;
+import com.github.mikephil.charting.data.Entry;
+import com.github.mikephil.charting.data.LineData;
+import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.formatter.IndexAxisValueFormatter;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -43,6 +48,7 @@ public class ProgressFragment extends Fragment {
     private Handler dayCheckHandler = new Handler();
     private Runnable dayCheckRunnable;
     private int lastCheckedDay = -1;
+    private TextView carbTxtView,proteinTxtView,fatTxtView;
 
     public ProgressFragment() {}
 
@@ -63,10 +69,15 @@ public class ProgressFragment extends Fragment {
         macrosBarChart = view.findViewById(R.id.macros_bar_chart);
         caloriesBarChart = view.findViewById(R.id.calories_bar_chart);
         weightLineChart = view.findViewById(R.id.weight_line_chart);
-        userMail = userPref.getString("UserMail", null);
+        carbTxtView = view.findViewById(R.id.carbs_procentage_txt_view);
+        proteinTxtView = view.findViewById(R.id.proteins_procentage_txt_view);
+        fatTxtView = view.findViewById(R.id.fats_procentage_txt_view);
+        userMail = userPref.getString("UserMail","");
 
         getMacrosDB();
         getCaloriesDB();
+        getWeightHistory();
+
         startCheckingForMonday();
 
         return view;
@@ -92,6 +103,9 @@ public class ProgressFragment extends Fragment {
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
                     Map<String, DailyMacro> dailyMacros = new HashMap<>();
+                    float totalCarbs = 0f;
+                    float totalFats = 0f;
+                    float totalProteins = 0f;
 
                     for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
                         Timestamp timestamp = doc.getTimestamp("date");
@@ -106,6 +120,10 @@ public class ProgressFragment extends Fragment {
                         float fats = doc.contains("fats") ? doc.getDouble("fats").floatValue() : 0f;
                         float proteins = doc.contains("proteins") ? doc.getDouble("proteins").floatValue() : 0f;
 
+                        totalCarbs += carbs;
+                        totalFats += fats;
+                        totalProteins += proteins;
+
                         DailyMacro macros = dailyMacros.getOrDefault(dayKey, new DailyMacro());
                         macros.carbs += carbs;
                         macros.fats += fats;
@@ -114,8 +132,28 @@ public class ProgressFragment extends Fragment {
                     }
 
                     AssignMacro assignMacros = getAssignMacro(dailyMacros);
-                    showMacrosChart(assignMacros.filledEntries, assignMacros.emptyEntries, assignMacros.weekDays);
+                    showMacrosChart(assignMacros.filledEntries, assignMacros.emptyEntries, assignMacros.weekDays, assignMacros.hasData);
+
+                    updateMacrosPercentages(totalCarbs,totalFats,totalProteins);
                 });
+    }
+
+    private void updateMacrosPercentages(float carbs, float fats, float proteins) {
+        float total = carbs + fats + proteins;
+        if (total == 0f) {
+            carbTxtView.setText("0%");
+            proteinTxtView.setText("0%");
+            fatTxtView.setText("0%");
+            return;
+        }
+
+        int carbsPercent = Math.round((carbs / total) * 100f);
+        int fatsPercent = Math.round((fats / total) * 100f);
+        int proteinsPercent = Math.round((proteins / total) * 100f);
+
+        carbTxtView.setText(carbsPercent + "%");
+        proteinTxtView.setText(proteinsPercent + "%");
+        fatTxtView.setText(fatsPercent + "%");
     }
 
     public void getCaloriesDB() {
@@ -165,25 +203,30 @@ public class ProgressFragment extends Fragment {
     private static AssignMacro getAssignMacro(Map<String, DailyMacro> dailyMacros) {
         List<String> weekDays = Arrays.asList("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun");
         List<BarEntry> filledBars = new ArrayList<>();
-        List<BarEntry> emptyBars = new ArrayList<>();
+        List<BarEntry> grayBars = new ArrayList<>();
+        boolean hasData = false;
 
         for (int i = 0; i < weekDays.size(); i++) {
             String day = weekDays.get(i);
-            DailyMacro macros = dailyMacros.getOrDefault(day, new DailyMacro());
+            DailyMacro macros = dailyMacros.get(day);
 
             if (macros != null && macros.total() > 0f) {
                 filledBars.add(new BarEntry(i, macros.convertToProcentage()));
+                hasData = true;
             } else {
-                emptyBars.add(new BarEntry(i, new float[]{33f, 33f, 34f}));
+                grayBars.add(new BarEntry(i, new float[]{33f, 33f, 34f})); // fake macros adding up to 100%
             }
         }
-        return new AssignMacro(weekDays, filledBars, emptyBars);
+
+        return new AssignMacro(weekDays, filledBars, grayBars, hasData);
     }
 
     @NonNull
     private static AssignCalories getAssignCalories(Map<String, Float> dailyCalories) {
         List<String> weekDays = Arrays.asList("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun");
         List<BarEntry> entries = new ArrayList<>();
+
+        boolean hasData = false;
 
         for (int i = 0; i < weekDays.size(); i++) {
             String day = weekDays.get(i);
@@ -193,34 +236,65 @@ public class ProgressFragment extends Fragment {
 
             if (HomeFragment.dailyCaloriesGoal > 0 && calories > 0) {
                 caloriesPercent = (calories / HomeFragment.dailyCaloriesGoal) * 100f;
-                caloriesPercent = Math.min(caloriesPercent, 120f); // cap at 120%
+                caloriesPercent = Math.min(caloriesPercent, 120f);
             }
 
             float filled = caloriesPercent;
             float empty = 120f - caloriesPercent;
 
-            if (filled == 0f) {
-                // Completely empty day, 0 filled, full gray
+            if (filled > 0f) {
+                hasData = true;
+            }
+
+            entries.add(new BarEntry(i, new float[]{filled, empty}));
+        }
+
+        // 🛡️ If there's absolutely no data, fill empty gray bars instead to avoid crash
+        if (!hasData) {
+            entries.clear();
+            for (int i = 0; i < weekDays.size(); i++) {
                 entries.add(new BarEntry(i, new float[]{0f, 120f}));
-            } else {
-                entries.add(new BarEntry(i, new float[]{filled, empty}));
             }
         }
+
         return new AssignCalories(weekDays, entries, Collections.emptyList());
     }
 
-    private void showMacrosChart(List<BarEntry> filledEntries, List<BarEntry> emptyEntries, List<String> dayLabels) {
-        int colorProtein = Color.parseColor("#60A5FA");
-        int colorFat = Color.parseColor("#FCD34D");
-        int colorCarbs = Color.parseColor("#FB923C");
+    private void showMacrosChart(List<BarEntry> filledEntries, List<BarEntry> emptyEntries, List<String> dayLabels, boolean hasData) {
+        int colorCarbs = Color.parseColor("#fe7f2d");
+        int colorProtein = Color.parseColor("#0096c7");
+        int colorFat = Color.parseColor("#fdc500");
         int gray = Color.argb(80, 180, 180, 180);
 
-        setupBarChart(macrosBarChart, filledEntries, emptyEntries, dayLabels,
-                new int[]{colorProtein, colorFat, colorCarbs}, new String[]{"Protein", "Fat", "Carbs"}, gray, true);
+        if (hasData) {
+            setupBarChart(
+                    macrosBarChart,
+                    filledEntries,
+                    emptyEntries,
+                    dayLabels,
+                    new int[]{colorCarbs, colorProtein, colorFat},
+                    new String[]{"Carbs", "Protein", "Fat"},
+                    gray,
+                    true
+            );
+        } else {
+            // if no macros data, show only gray, no legend
+            setupBarChart(
+                    macrosBarChart,
+                    Collections.emptyList(),
+                    emptyEntries,
+                    dayLabels,
+                    new int[]{gray},
+                    new String[]{""},
+                    gray,
+                    false
+            );
+        }
     }
 
     private void showCaloriesChart(List<BarEntry> filledEntries, List<BarEntry> emptyEntries, List<String> dayLabels) {
-        int colorCalories = Color.argb(255, 120, 200, 80);
+        //int colorCalories = Color.argb(255, 120, 200, 80);
+        int colorCalories = Color.parseColor("#4ade80");
         int colorEmpty = Color.argb(80, 180, 180, 180);
         //int colorEmpty = Color.parseColor("#A5A5A5");
 
@@ -335,6 +409,74 @@ public class ProgressFragment extends Fragment {
         dayCheckHandler.post(dayCheckRunnable);
     }
 
+    public void getWeightHistory() {
+        if (userMail == null || userMail.isEmpty()) {
+            userMail = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail();
+            Toast.makeText(requireContext(), "User email not found. Please log in again.", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+        db.collection("WeightHistory")
+                .whereEqualTo("userMail", userMail)
+                .orderBy("timestamp")
+                .get()
+                .addOnSuccessListener(queryDocumentSnapshots -> {
+                    List<Entry> weightEntries = new ArrayList<>();
+                    List<String> dateLabels = new ArrayList<>();
+                    int index = 0;
+
+                    SimpleDateFormat sdf = new SimpleDateFormat("dd MMM", Locale.getDefault());
+
+                    for (DocumentSnapshot doc : queryDocumentSnapshots.getDocuments()) {
+                        Timestamp timestamp = doc.getTimestamp("timestamp");
+                        Double weight = doc.getDouble("weight");
+
+                        if (timestamp != null && weight != null) {
+                            weightEntries.add(new Entry(index, weight.floatValue()));
+                            dateLabels.add(sdf.format(timestamp.toDate()));
+                            index++;
+                        }
+                    }
+
+                    showWeightLineChart(weightEntries, dateLabels);
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(requireContext(), "Failed to fetch weight history: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                });
+    }
+
+    private void showWeightLineChart(List<Entry> entries, List<String> labels) {
+        LineDataSet dataSet = new LineDataSet(entries, "Weight");
+        dataSet.setColor(Color.parseColor("#60A5FA"));
+        dataSet.setCircleColor(Color.parseColor("#60A5FA"));
+        dataSet.setLineWidth(2f);
+        dataSet.setCircleRadius(4f);
+        dataSet.setDrawValues(false);
+        dataSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
+        dataSet.setDrawFilled(true);
+        dataSet.setFillColor(Color.parseColor("#60A5FA"));
+        dataSet.setFillAlpha(60);
+
+        LineData lineData = new LineData(dataSet);
+
+        weightLineChart.setData(lineData);
+
+        XAxis xAxis = weightLineChart.getXAxis();
+        xAxis.setValueFormatter(new IndexAxisValueFormatter(labels));
+        xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
+        xAxis.setGranularity(1f);
+        xAxis.setDrawGridLines(false);
+
+        weightLineChart.getAxisLeft().setDrawGridLines(false);
+        weightLineChart.getAxisRight().setEnabled(false);
+
+        weightLineChart.getDescription().setEnabled(false);
+        weightLineChart.getLegend().setEnabled(false);
+
+        weightLineChart.animateX(800, Easing.EaseInOutQuad);
+        weightLineChart.invalidate();
+    }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
@@ -343,16 +485,17 @@ public class ProgressFragment extends Fragment {
         }
     }
 
-    // Helper classes
     private static class AssignMacro {
         public final List<String> weekDays;
         public final List<BarEntry> filledEntries;
         public final List<BarEntry> emptyEntries;
+        public final boolean hasData;
 
-        public AssignMacro(List<String> weekDays, List<BarEntry> filledEntries, List<BarEntry> emptyEntries) {
+        public AssignMacro(List<String> weekDays, List<BarEntry> filledEntries, List<BarEntry> emptyEntries, boolean hasData) {
             this.weekDays = weekDays;
             this.filledEntries = filledEntries;
             this.emptyEntries = emptyEntries;
+            this.hasData = hasData;
         }
     }
 

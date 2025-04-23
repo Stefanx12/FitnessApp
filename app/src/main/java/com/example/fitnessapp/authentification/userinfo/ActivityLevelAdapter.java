@@ -50,7 +50,7 @@ public class ActivityLevelAdapter extends RecyclerView.Adapter<ActivityLevelAdap
         });
         holder.radioButton.setOnClickListener(v -> {
             selectedPosition = holder.getAdapterPosition();
-            notifyDataSetChanged(); // Update UI
+            notifyDataSetChanged();
             listener.onActivityLevelSelected(activityLevel.getTitle());
         });
     }

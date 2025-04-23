@@ -15,12 +15,12 @@
     <string name="add_lunch">Lunch</string>
     <string name="add_breakfast">Breakfast</string>
     <string name="nutritional_information">Nutritional information</string>
-    <string name="add_calories">Calories: %.2f kcal</string>
-    <string name="add_proteins">Proteins: %.2fg</string>
-    <string name="add_fats">Fats: %.2fg</string>
-    <string name="add_carbohydrates">Carbohydrates: %.2fg</string>
+    <string name="add_calories">%.2f kcal</string>
+    <string name="add_proteins">%.2f g</string>
+    <string name="add_fats">%.2f g</string>
+    <string name="add_carbohydrates">%.2f g</string>
     <string name="grams">Grams</string>
-    <string name="add_weight">100: %.2f</string>
+    <string name="add_weight">%.2f g</string>
     <string name="add_food_name">Food Name</string>
     <string name="log_in_string">Log-In</string>
     <string name="sign_up_string">Sign Up</string>

@@ -180,7 +180,7 @@ public class FoodDetailFragment extends Fragment {
 
                     updateNutrientValuesBasedOnWeight();
                 } else {
-                    Toast.makeText(getContext(), "Failed to fetch food details", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getContext(), "Failed to fetch food details", Toast.LENGTH_LONG).show();
                 }
             }
 

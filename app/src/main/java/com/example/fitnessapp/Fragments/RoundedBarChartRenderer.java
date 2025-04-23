@@ -121,8 +121,8 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
             float lineY = contentBottom - (contentBottom - contentTop) * (100f / 120f);
 
             Paint paint = new Paint();
-            paint.setColor(Color.GREEN);
-            paint.setStrokeWidth(6f); // thicker so it looks nice
+            paint.setColor(Color.parseColor("#ffffff"));
+            paint.setStrokeWidth(5f);
             paint.setAntiAlias(true);
 
             int dataSetCount = barData.getDataSetCount();
@@ -141,13 +141,12 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
                     transformer.pointValuesToPixel(pts);
 
                     float barWidth = barData.getBarWidth();
-                    float halfBarWidth = (barWidth / 2f) * mViewPortHandler.getContentRect().width() / 7f; // 7 days
+                    float halfBarWidth = (barWidth / 2f) * mViewPortHandler.getContentRect().width() / 7f;
 
-                    // Draw a short green line only above this bar
                     c.drawLine(
-                            pts[0] - halfBarWidth + 10f, // left side (a little inside)
+                            pts[0] - halfBarWidth + 10f,
                             lineY,
-                            pts[0] + halfBarWidth - 10f, // right side (a little inside)
+                            pts[0] + halfBarWidth - 10f,
                             lineY,
                             paint
                     );

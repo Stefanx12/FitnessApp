@@ -173,9 +173,10 @@ public class HomeFragment extends Fragment {
         FoodFragment foodFragment = FoodFragment.newInstance(mealType);
         Fragment home = requireActivity().getSupportFragmentManager().findFragmentByTag("Home");
         FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
+        //transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
+        transaction.hide(home);
         transaction.add(R.id.fragment_container, foodFragment);
         transaction.addToBackStack(null);
-        transaction.hide(home);
         transaction.commit();
     }
 
@@ -183,9 +184,9 @@ public class HomeFragment extends Fragment {
         Fragment home = requireActivity().getSupportFragmentManager().findFragmentByTag("Home");
 
         requireActivity().getSupportFragmentManager().beginTransaction()
+                .hide(home)
                 .add(R.id.fragment_container,fragment)
                 .addToBackStack(null)
-                .hide(home)
                 .commit();
     }
 

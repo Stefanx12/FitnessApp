@@ -2,7 +2,8 @@
 <androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="@color/white">
 
     <com.google.android.material.bottomsheet.BottomSheetDragHandleView
         android:id="@+id/bottom_sheet_drag_goal_view"
@@ -19,7 +20,8 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:text="What's your goal ?"
         android:textSize="18sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:textColor="#3C7D63"/>
 
     <androidx.cardview.widget.CardView
         android:id="@+id/lose_weight_card_view"
@@ -28,7 +30,8 @@
         app:layout_constraintTop_toBottomOf="@+id/goal_title_txt_view"
         android:layout_marginStart="30dp"
         android:layout_marginEnd="30dp"
-        android:layout_marginTop="170dp">
+        android:layout_marginTop="170dp"
+        android:backgroundTint="@color/white">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -54,7 +57,8 @@
         app:layout_constraintTop_toBottomOf="@+id/lose_weight_card_view"
         android:layout_marginStart="30dp"
         android:layout_marginEnd="30dp"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/white">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -80,7 +84,8 @@
         app:layout_constraintTop_toBottomOf="@+id/maintain_weight_card_view"
         android:layout_marginStart="30dp"
         android:layout_marginEnd="30dp"
-        android:layout_marginTop="10dp">
+        android:layout_marginTop="10dp"
+        android:backgroundTint="@color/white">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -128,6 +133,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         android:layout_marginBottom="8dp"
         android:text="Done"
+        android:textColor="@color/white"
         android:textSize="12sp"
         android:backgroundTint="#3C7D63"/>
 
