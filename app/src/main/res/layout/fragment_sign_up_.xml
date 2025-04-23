@@ -97,7 +97,9 @@
                 android:layout_height="wrap_content"
                 android:background="@drawable/user_activity_card_view_gradient"
                 android:hint="Confirm Password"
+                android:textColorHint="@color/gray"
                 android:inputType="textPassword"
+                android:textColor="@color/black"
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"/>
 
@@ -139,6 +141,7 @@
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:hint="Password"
                 android:inputType="textPassword"
+                android:textColor="@color/black"
                 android:textColorHint="@color/gray"/>
 
             <ImageButton
@@ -212,7 +215,8 @@
                 app:layout_constraintTop_toTopOf="parent"
                 app:layout_constraintBottom_toBottomOf="parent"
                 android:hint="Email"
-                android:textColorHint="@color/gray"/>
+                android:textColorHint="@color/gray"
+                android:textColor="@color/black"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>

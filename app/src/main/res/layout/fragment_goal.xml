@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context=".authentification.userinfo.GoalFragment"
-    android:background="@drawable/quiz_background">
+    android:background="@drawable/gray_smooth_home">
 
     <TextView
         android:id="@+id/goal_message_textView"
@@ -37,7 +37,7 @@
             android:id="@+id/lose_weight_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rectangular_form_quiz">
+            android:background="@drawable/profile_card_colors">
 
             <TextView
                 android:id="@+id/text_lose_weight"
@@ -69,7 +69,7 @@
             android:id="@+id/maintain_weight_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rectangular_form_quiz">
+            android:background="@drawable/profile_card_colors">
 
             <TextView
                 android:id="@+id/text_maintain_weight"
@@ -101,7 +101,7 @@
             android:id="@+id/gain_weight_layout"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/rectangular_form_quiz">
+            android:background="@drawable/profile_card_colors">
 
             <TextView
                 android:id="@+id/text_gain_weight"

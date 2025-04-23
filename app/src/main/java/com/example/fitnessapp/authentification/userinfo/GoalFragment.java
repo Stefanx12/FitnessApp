@@ -115,9 +115,9 @@ public class GoalFragment extends Fragment implements QuizData {
     }
 
     public void resetColors(){
-        loseWeightLayout.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.rectangular_form_quiz));
-        maintainWeightLayout.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.rectangular_form_quiz));
-        gainWeightLayout.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.rectangular_form_quiz));
+        loseWeightLayout.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.profile_card_colors));
+        maintainWeightLayout.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.profile_card_colors));
+        gainWeightLayout.setBackground(ContextCompat.getDrawable(requireContext(), R.drawable.profile_card_colors));
     }
 
     public String getSelectedGoal() {

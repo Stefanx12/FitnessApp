@@ -44,6 +44,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 
 import org.w3c.dom.Text;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class authFragment extends Fragment {
@@ -55,10 +56,11 @@ public class authFragment extends Fragment {
     LinearLayout linearLayout;
     private CheckBox rememberCheckBox;
     private boolean isSignUp,isVisible;
-    SharedPreferences userSharedPref;
+    SharedPreferences userSharedPref,quizPref;
     private static final int RC_SIGN_IN = 100;
     private GoogleSignInClient googleSignInClient;
     private FirebaseAuth mAuth;
+    private FirebaseFirestore db;
     public authFragment() {
         // Required empty public constructor
     }
@@ -75,7 +77,17 @@ public class authFragment extends Fragment {
         if (getArguments() != null) {
             isSignUp = getArguments().getBoolean("isSignUp",true);
         }
-        userSharedPref = getContext().getSharedPreferences("UserSharedPref", Context.MODE_PRIVATE);
+        userSharedPref = requireContext().getSharedPreferences("UserSharedPref", Context.MODE_PRIVATE);
+        quizPref = requireContext().getSharedPreferences("QuizPreferences",Context.MODE_PRIVATE);
+        db = FirebaseFirestore.getInstance();
+
+        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                .requestIdToken(getString(R.string.default_web_client_id))
+                .requestEmail()
+                //.setAccountName(null)
+                .build();
+
+        googleSignInClient = GoogleSignIn.getClient(requireActivity(), gso);
     }
 
     @Override
@@ -99,7 +111,6 @@ public class authFragment extends Fragment {
 //                .addCredentialOption(googleIdOption)
 //                .build();
 
-        //forgotPassword.setOn
 
         googleImgBtn.setOnClickListener(v -> signInGoogle());
         forgotPassword.setOnClickListener(v -> forgotPassword());
@@ -109,7 +120,6 @@ public class authFragment extends Fragment {
 
     private void manageInteractions() {
         SharedPreferences.Editor editor = userSharedPref.edit();
-
 
         Log.d("SignUp","Valoare isSignUp " + isSignUp);
 
@@ -170,7 +180,6 @@ public class authFragment extends Fragment {
             editText.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         }
 
-        // Force refresh + keep cursor at end
         editText.setSelection(editText.getText().length());
     }
 
@@ -195,21 +204,55 @@ public class authFragment extends Fragment {
     }
 
     private final ActivityResultLauncher<Intent> googleSignInLauncher = registerForActivityResult(
-            new ActivityResultContracts.StartActivityForResult(),result ->{
-                if(result.getResultCode() == getActivity().RESULT_OK && result.getData() != null){
+            new ActivityResultContracts.StartActivityForResult(), result -> {
+                if (result.getResultCode() == getActivity().RESULT_OK && result.getData() != null) {
                     Task<GoogleSignInAccount> task = GoogleSignIn.getSignedInAccountFromIntent(result.getData());
-                    try{
+                    try {
                         GoogleSignInAccount account = task.getResult(ApiException.class);
-                        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(),null);
-                        mAuth.signInWithCredential(credential).addOnCompleteListener(getActivity(),authTask -> goToHome());
-                    }catch (ApiException e){
-                        Log.w("authFragment", "Google sign-in failed", e);
+                        AuthCredential credential = GoogleAuthProvider.getCredential(account.getIdToken(), null);
+                        mAuth.signInWithCredential(credential).addOnCompleteListener(getActivity(), authTask -> {
+                            if (authTask.isSuccessful()) {
+                                FirebaseUser user = mAuth.getCurrentUser();
+                                if (user != null) {
+                                    String email = user.getEmail();
+                                    saveUserToSharedPreferences(email);
+                                    userSharedPref.edit().putBoolean("rememberMe",true).apply();
+
+                                    db = FirebaseFirestore.getInstance();
+                                    db.collection("Users").document(email).get().addOnSuccessListener(documentSnapshot -> {
+                                        if (documentSnapshot.exists()) {
+                                            saveUserToSharedPreferences(user.getEmail());
+                                            getUserInfoDB(user);
+                                        } else {
+                                            Map<String, Object> userData = new HashMap<>();
+                                            userData.put("UserMail", email);
+                                            db.collection("Users").document(email).set(userData)
+                                                    .addOnSuccessListener(unused -> {
+                                                        SharedPreferences.Editor editor = userSharedPref.edit();
+                                                        editor.putBoolean("rememberMe", true);
+                                                        editor.apply();
+                                                        navigateToQuiz();
+                                                    });
+                                        }
+                                    });
+                                }
+                            } else {
+                                Toast.makeText(getContext(), "Google sign-in failed", Toast.LENGTH_SHORT).show();
+                                Log.w("authFragment", "Google sign-in failed", authTask.getException());
+                            }
+                        });
+                    } catch (ApiException e) {
+                        Log.w("authFragment", "Google sign-in error", e);
                     }
                 }
             });
-    private void signInGoogle(){
-        googleSignInLauncher.launch(googleSignInClient.getSignInIntent());
+
+    private void signInGoogle() {
+        googleSignInClient.signOut().addOnCompleteListener(task -> {
+            googleSignInLauncher.launch(googleSignInClient.getSignInIntent());
+        });
     }
+
     private void LogInUser(){
         String email = emailTiet.getText().toString().trim();
         String password = passTiet.getText().toString().trim();
@@ -222,47 +265,48 @@ public class authFragment extends Fragment {
         mAuth.signInWithEmailAndPassword(email,password).addOnCompleteListener(getActivity(),task ->{
            if(task.isSuccessful()){
                FirebaseUser user = mAuth.getCurrentUser();
-               if(rememberMe){
-                   saveUserToSharedPreferences(user.getEmail());
-               }
+               saveUserToSharedPreferences(user.getEmail());
+               getUserInfoDB(user);
 
-               FirebaseFirestore db = FirebaseFirestore.getInstance();
-               db.collection("Users").document(user.getEmail()).get().addOnSuccessListener(
-                       documentSnapshot ->{
-                           if(documentSnapshot.exists()){
-                               SharedPreferences quizPref = requireContext().getSharedPreferences("QuizPreferences",Context.MODE_PRIVATE);
-                               SharedPreferences.Editor editor = quizPref.edit();
-
-                               for (Map.Entry<String, Object> entry : documentSnapshot.getData().entrySet()) {
-                                   String key = entry.getKey();
-                                   Object value = entry.getValue();
-
-                                   if ("UserMail".equals(key)) {
-                                       continue;
-                                   }
-
-                                   if ("Birthday".equals(key) && value instanceof Number) {
-                                       editor.putInt("Age", Integer.parseInt(String.valueOf(value)));
-                                   } else if ("Goal".equals(key)) {
-                                       editor.putString("SelectedGoal",String.valueOf(value));
-                                   } else if ("WeightGoal".equals(key)) {
-                                       editor.putString("TargetWeight",String.valueOf(value));
-                                   } else {
-                                       editor.putString(key, String.valueOf(value));
-                                   }
-                               }
-                               editor.apply();
-                               goToHome();
-                           }
-                       }
-
-               );
            }else {
                Toast.makeText(getContext(), "Email or password error", Toast.LENGTH_SHORT).show();
                Log.d("authFragment","Error: " + task.getException());
            }
         });
     }
+
+    private void getUserInfoDB(FirebaseUser user) {
+        db.collection("Users").document(user.getEmail()).get().addOnSuccessListener(
+                documentSnapshot ->{
+                    if(documentSnapshot.exists()){
+                        SharedPreferences quizPref = requireContext().getSharedPreferences("QuizPreferences",Context.MODE_PRIVATE);
+                        SharedPreferences.Editor editor = quizPref.edit();
+
+                        for (Map.Entry<String, Object> entry : documentSnapshot.getData().entrySet()) {
+                            String key = entry.getKey();
+                            Object value = entry.getValue();
+
+                            if ("UserMail".equals(key)) {
+                                continue;
+                            }
+
+                            if ("Birthday".equals(key) && value instanceof Number) {
+                                editor.putInt("Age", Integer.parseInt(String.valueOf(value)));
+                            } else if ("Goal".equals(key)) {
+                                editor.putString("SelectedGoal",String.valueOf(value));
+                            } else if ("WeightGoal".equals(key)) {
+                                editor.putString("TargetWeight",String.valueOf(value));
+                            } else {
+                                editor.putString(key, String.valueOf(value));
+                            }
+                        }
+                        editor.apply();
+                        goToHome();
+                    }
+                }
+        );
+    }
+
     private void goToHome(){
         // MODIFICARE AICI
         requireActivity().getSupportFragmentManager().beginTransaction()
@@ -272,11 +316,13 @@ public class authFragment extends Fragment {
         startActivity(intent);
         getActivity().finish();
     }
+
     private void returnToUserActivity() {
         if (getActivity() instanceof UserActivity) {
             ((UserActivity) getActivity()).returnToUserActivity();
         }
     }
+
     private void signUpUser(){
         String email = emailTiet.getText().toString().trim();
         String password = passTiet.getText().toString().trim();
@@ -319,12 +365,14 @@ public class authFragment extends Fragment {
             }
         });
     }
+
     private void saveUserToSharedPreferences(String email) {
         SharedPreferences sharedPreferences = getActivity().getSharedPreferences("UserSharedPref", getActivity().MODE_PRIVATE);
         SharedPreferences.Editor editor = sharedPreferences.edit();
         editor.putString("UserMail", email);
         editor.apply();
     }
+
     private void navigateToQuiz() {
             Intent intent = new Intent(getActivity(), MainActivity.class);
             intent.putExtra("quizFragment", true);

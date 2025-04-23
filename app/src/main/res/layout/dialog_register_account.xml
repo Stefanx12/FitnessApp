@@ -20,12 +20,22 @@
         android:layout_marginEnd="20dp"
         android:layout_marginTop="20dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/guest_user_email_input"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Email"/>
+            android:background="@drawable/profile_card_colors">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/guest_user_email_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:textColorHint="@color/white"
+                android:textColor="@color/white"
+                android:hint="Email"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -37,12 +47,35 @@
         android:layout_marginEnd="20dp"
         android:layout_marginTop="8dp">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/guest_user_pass_input"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Password"/>
+            android:background="@drawable/profile_card_colors">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/guest_user_pass_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:hint="Password"
+                android:textColorHint="@color/white"
+                android:textColor="@color/white"
+                android:inputType="textPassword"/>
+
+
+            <ImageButton
+                android:id="@+id/show_pass_register_img_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/baseline_remove_red_eye_24"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:background="@android:color/transparent"
+                android:layout_marginEnd="25dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -54,12 +87,34 @@
         android:layout_marginTop="8dp"
         app:layout_constraintTop_toBottomOf="@+id/guest_user_pass_layout">
 
-        <com.google.android.material.textfield.TextInputEditText
-            android:id="@+id/guest_user_confirm_pass_input"
+        <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Confirm Password"/>
+            android:background="@drawable/profile_card_colors">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/guest_user_confirm_pass_input"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:hint="Confirm Password"
+                android:textColorHint="@color/white"
+                android:textColor="@color/white"
+                android:inputType="textPassword"/>
+
+            <ImageButton
+                android:id="@+id/show_confirm_pass_register_img_btn"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:src="@drawable/baseline_remove_red_eye_24"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintBottom_toBottomOf="parent"
+                android:background="@android:color/transparent"
+                android:layout_marginEnd="25dp"/>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>
 
     <Button

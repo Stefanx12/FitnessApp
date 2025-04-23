@@ -4,7 +4,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageButton;
@@ -33,6 +35,7 @@ public class HomeFragment extends Fragment {
     private ImageButton profileButton,breakfastbutton,lunchbutton,dinnerbutton,snackbutton;
     private CardView breakfastCardView,lunchCardView,dinnerCardView,snackCardView;
     private int i = 0;
+    public static int dailyCaloriesGoal = 0;
     private FirebaseFirestore db;
     SharedPreferences sharedPreferences,userPreferences;
 
@@ -120,10 +123,6 @@ public class HomeFragment extends Fragment {
             public void onClick(View v) {
 
                 changeFragment(new ProfileFragment());
-//                requireActivity().getSupportFragmentManager().beginTransaction()
-//                        .add(R.id.fragment_container,new ProfileFragment())
-//                        .remove(HomeFragment.this)
-//                        .commit();
                 ((MainActivity) getActivity()).deselectBottomNavItems();
                 ((MainActivity) getActivity()).disableBottomNav();
             }
@@ -174,8 +173,10 @@ public class HomeFragment extends Fragment {
         FoodFragment foodFragment = FoodFragment.newInstance(mealType);
         Fragment home = requireActivity().getSupportFragmentManager().findFragmentByTag("Home");
         FragmentTransaction transaction = requireActivity().getSupportFragmentManager().beginTransaction();
-        transaction.add(R.id.fragment_container, foodFragment);
+        //transaction.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_left);
         transaction.hide(home);
+        transaction.add(R.id.fragment_container, foodFragment);
+        transaction.addToBackStack(null);
         transaction.commit();
     }
 
@@ -183,8 +184,9 @@ public class HomeFragment extends Fragment {
         Fragment home = requireActivity().getSupportFragmentManager().findFragmentByTag("Home");
 
         requireActivity().getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_container,fragment)
                 .hide(home)
+                .add(R.id.fragment_container,fragment)
+                .addToBackStack(null)
                 .commit();
     }
 
@@ -278,6 +280,8 @@ public class HomeFragment extends Fragment {
                         setNutrientText(proteinValue, totalProteins, maxProteins);
                         setNutrientText(fatValue, totalFats, maxFats);
                         setNutrientText(carbValue, totalCarbs, maxCarbs);
+
+                        dailyCaloriesGoal = maxCalories;
                     } else {
                         Log.e("HomeFragment", "User data not found");
                     }

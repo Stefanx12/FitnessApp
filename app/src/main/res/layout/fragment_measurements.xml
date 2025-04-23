@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".authentification.userinfo.MeasurementsFragment"
-    android:background="@drawable/quiz_background">
+    android:background="@drawable/gray_smooth_home">
 
     <TextView
         android:id="@+id/measurements_text_view"
@@ -41,7 +41,7 @@
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
         android:layout_marginTop="5dp"
-        android:background="@drawable/rectangular_form_quiz">
+        android:background="@drawable/profile_card_colors">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -56,7 +56,7 @@
                 android:textColorHint="@color/white"
                 android:inputType="number"
                 android:textAlignment="center"
-                android:hint="Enter your height"/>
+                android:hint="Enter your height (cm)"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
     </com.google.android.material.textfield.TextInputLayout>
@@ -83,7 +83,7 @@
         android:layout_marginTop="5dp"
         android:layout_marginStart="25dp"
         android:layout_marginEnd="25dp"
-        android:background="@drawable/rectangular_form_quiz">
+        android:background="@drawable/profile_card_colors">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -96,7 +96,7 @@
                 android:textColor="@color/white"
                 android:inputType="numberDecimal"
                 android:textAlignment="center"
-                android:hint="Enter your weight"
+                android:hint="Enter your weight (kg)"
                 android:textColorHint="@color/white"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>
@@ -124,7 +124,7 @@
         android:layout_marginEnd="25dp"
         app:layout_constraintTop_toBottomOf="@+id/target_weight_text_view"
         android:layout_marginTop="5dp"
-        android:background="@drawable/rectangular_form_quiz">
+        android:background="@drawable/profile_card_colors">
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -137,7 +137,7 @@
                 android:textColor="@color/white"
                 android:inputType="numberDecimal"
                 android:textAlignment="center"
-                android:hint="Enter your goal weight"
+                android:hint="Enter your goal weight (kg)"
                 android:textColorHint="@color/white"/>
 
         </androidx.constraintlayout.widget.ConstraintLayout>

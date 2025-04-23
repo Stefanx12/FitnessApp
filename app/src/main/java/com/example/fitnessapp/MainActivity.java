@@ -4,7 +4,12 @@ import static com.example.fitnessapp.Fragments.HomeFragment.getDailyCalories;
 
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.text.InputType;
 import android.util.Log;
+import android.view.GestureDetector;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -27,6 +32,7 @@ import com.example.fitnessapp.authentification.userinfo.ProgressRateFragment;
 import com.example.fitnessapp.authentification.userinfo.QuizData;
 import com.example.fitnessapp.authentification.authFragment;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
+import com.google.android.material.textfield.TextInputEditText;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FirebaseFirestore;
@@ -49,6 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private Button nextButton;
     private ImageButton returnButton;
     private int currentStep = 0;
+    private boolean quizProgress = false;
     String selectedActivityLevel;
     SharedPreferences quizPreferences,userSharedPref;
     FirebaseFirestore db;
@@ -104,34 +111,25 @@ public class MainActivity extends AppCompatActivity {
                             .hide(homeFragment)
                             .show(progress)
                             .commit();
+                    ((ProgressFragment) progress).getMacrosDB();
+                    ((ProgressFragment) progress).getCaloriesDB();
+                    ((ProgressFragment) progress).getWeightHistory();
                 }
             }
 
             return true;
         });
 
-        checkForUserMailInSharedPreferences();
+        quizProgress = quizPreferences.getBoolean("quiz_in_progress",false);
+        if(quizProgress){
+            startQuiz();
+        }
+
+        if (!getIntent().getBooleanExtra("fromSignOut", false)) {
+            checkForUserMailInSharedPreferences();
+        }
         //resetUserSharedPreferences();
         //startQuiz();
-
-//        boolean sign_up = getIntent().getBooleanExtra("sign_up", false);
-//        boolean log_in = getIntent().getBooleanExtra("log_in", false);
-//
-//        //Log.d("MainActivity", "Received sign_up: " + sign_up + ", log_in: " + log_in);
-//
-//        if (sign_up) {
-//            bottomNavigationView.setVisibility(View.GONE);
-//            getSupportFragmentManager().beginTransaction()
-//                    .add(R.id.fragment_container,new authFragment())
-//                    .commit();
-//            //loadFragment(new authFragment());
-//            Log.d("MainActivity", "Sign Up Fragment Loaded");
-//        }
-//
-//        if (log_in) {
-//            Log.d("MainActivity", "Log-In Pressed - Loading HomeFragment");
-//            loadFragment(new HomeFragment());
-//        }
 
         boolean openQuiz = getIntent().getBooleanExtra("quizFragment", false);
         Log.d("MainActivity","Open Quiz: " + openQuiz);
@@ -142,6 +140,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void startQuiz(){
         resetGoalSharedPreferences();
+        quizPreferences.edit().putBoolean("quiz_in_progress",true).apply();
         currentStep = 0;
         bottomNavigationView.setVisibility(View.GONE);
         frameLayout.setVisibility(View.GONE);
@@ -149,7 +148,7 @@ public class MainActivity extends AppCompatActivity {
         cardView.setVisibility(View.VISIBLE);
         nextButton.setVisibility(View.VISIBLE);
         returnButton.setVisibility(View.VISIBLE);
-        loadQuizFragment(quizFragments.get(currentStep));
+        loadQuizFragment(quizFragments.get(currentStep),true);
     }
 
     private void nextStep() {
@@ -178,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (currentStep < quizFragments.size()) {
-            loadQuizFragment(quizFragments.get(currentStep));
+            loadQuizFragment(quizFragments.get(currentStep),true);
         } else {
             finishQuiz();
         }
@@ -205,7 +204,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
 
-            loadQuizFragment(quizFragments.get(currentStep));
+            loadQuizFragment(quizFragments.get(currentStep),false);
         }
     }
 
@@ -235,6 +234,7 @@ public class MainActivity extends AppCompatActivity {
         }
         addHomeFragment(new HomeFragment(),"Home");
 
+        quizPreferences.edit().putBoolean("quiz_in_progress",false).apply();
         nextButton.setVisibility(View.GONE);
         returnButton.setVisibility(View.GONE);
         bottomNavigationView.setVisibility(View.VISIBLE);
@@ -242,6 +242,7 @@ public class MainActivity extends AppCompatActivity {
         cardView.setVisibility(View.GONE);
         quizLayout.setVisibility(View.GONE);
         insertUserIntoFirestore();
+        saveInitialWeightToHistory();
     }
 
     private void checkForUserMailInSharedPreferences() {
@@ -262,9 +263,11 @@ public class MainActivity extends AppCompatActivity {
             SharedPreferences.Editor editor = sharedPreferences.edit();
             editor.putString("UserMail",user.getEmail());
             editor.apply();
+            //addSpashScreen();
             addHomeFragment(homeFragment,"Home");
         }else{
-            addHomeFragment(homeFragment,"Home");
+            addSpashScreen();
+            //addHomeFragment(homeFragment,"Home");
         }
     }
 
@@ -285,11 +288,11 @@ public class MainActivity extends AppCompatActivity {
     protected void onStop() {
         super.onStop();
 
-        SharedPreferences sharedPreferences = getSharedPreferences("UserSharedPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-        boolean rememberMe = sharedPreferences.getBoolean("rememberMe",false);
+        SharedPreferences.Editor editor = userSharedPref.edit();
+        boolean rememberMe = userSharedPref.getBoolean("rememberMe",false);
         if(!rememberMe){
-            editor.remove("UserMail");
+            resetUserSharedPreferences();
+            //editor.remove("UserMail");
         }
         editor.apply();
     }
@@ -303,17 +306,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void resetUserSharedPreferences() {
-        SharedPreferences sharedPreferences = getSharedPreferences("UserSharedPref", MODE_PRIVATE);
-        SharedPreferences.Editor editor = sharedPreferences.edit();
-
-        editor.clear();
-        editor.apply();
+        quizPreferences.edit().clear().apply();
+        userSharedPref.edit().clear().apply();
 
         Log.d("MainActivity", "App reset to first launch state.");
 
-        Intent intent = new Intent(MainActivity.this, UserActivity.class);
-        startActivity(intent);
-        finish();
+//        Intent intent = new Intent(MainActivity.this, UserActivity.class);
+//        startActivity(intent);
+//        finish();
     }
 
     public void deselectBottomNavItems() {
@@ -324,9 +324,16 @@ public class MainActivity extends AppCompatActivity {
         bottomNavigationView.getMenu().setGroupCheckable(0, true, true);
     }
 
-    private void loadQuizFragment(Fragment fragment) {
+    private void loadQuizFragment(Fragment fragment,boolean isNext) {
         FragmentManager fragmentManager = getSupportFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+
+        if(isNext){
+            fragmentTransaction.setCustomAnimations(R.anim.slide_in_right,R.anim.slide_out_left);
+        }else {
+            fragmentTransaction.setCustomAnimations(R.anim.slide_in_left,R.anim.slide_out_right);
+        }
+
         fragmentTransaction.replace(R.id.quiz_fragment_container, fragment);
         fragmentTransaction.commit();
     }
@@ -341,6 +348,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void enableBottomNav(){
         bottomNavigationView.setVisibility(View.VISIBLE);
+        bottomNavigationView.setSelectedItemId(R.id.nav_home);
     }
 
     public void setSelectedActivityLevel(String selectedActivityLevel) {
@@ -404,5 +412,99 @@ public class MainActivity extends AppCompatActivity {
 
         Log.d("HomeFragment", "Daily Calories: " + dailyCalories);
         Log.d("HomeFragment", "Protein: " + proteinGrams + "g, Fat: " + fatGrams + "g, Carbs: " + carbGrams + "g");
+    }
+
+    public void swipeHome(Fragment fragment){
+        Fragment home = getSupportFragmentManager().findFragmentByTag("Home");
+        getSupportFragmentManager()
+                .beginTransaction()
+                .setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_right)
+                .remove(fragment)
+                .show(home)
+                .commit();
+    }
+
+    public void enableSwipeToHome(View rootView,Fragment fragment) {
+        GestureDetector gestureDetector = new GestureDetector(this, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public boolean onScroll(MotionEvent e1, MotionEvent e2, float distanceX, float distanceY) {
+                float deltaX = e2.getX() - e1.getX();
+                float deltaY = Math.abs(e2.getY() - e1.getY());
+
+                if (deltaX > 150 && deltaY < 100) {
+                    swipeHome(fragment);
+                    enableBottomNav();
+                    return true;
+                }
+                return false;
+            }
+        });
+
+        rootView.setOnTouchListener((v, event) -> gestureDetector.onTouchEvent(event));
+    }
+
+    private void saveInitialWeightToHistory() {
+        String userMail = userSharedPref.getString("UserMail", "Guest").toLowerCase(Locale.ROOT);
+        double initialWeight = Double.parseDouble(quizPreferences.getString("CurrentWeight", "0"));
+
+        Map<String, Object> weightEntry = new HashMap<>();
+        weightEntry.put("userMail", userMail);
+        weightEntry.put("weight", initialWeight);
+        weightEntry.put("timestamp", com.google.firebase.Timestamp.now());
+
+        db.collection("WeightHistory")
+                .add(weightEntry)
+                .addOnSuccessListener(documentReference -> Log.d("MainActivity", "Initial weight saved to history"))
+                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to save initial weight: " + e.getMessage()));
+    }
+
+    public void addWeightToHistory(double newWeight) {
+        String userMail = userSharedPref.getString("UserMail", "Guest").toLowerCase(Locale.ROOT);
+
+        Map<String, Object> weightEntry = new HashMap<>();
+        weightEntry.put("userMail", userMail);
+        weightEntry.put("weight", newWeight);
+        weightEntry.put("timestamp", com.google.firebase.Timestamp.now());
+
+        db.collection("WeightHistory")
+                .add(weightEntry)
+                .addOnSuccessListener(documentReference -> Log.d("ProfileFragment", "New weight saved"))
+                .addOnFailureListener(e -> Log.e("ProfileFragment", "Failed to save new weight: " + e.getMessage()));
+    }
+
+    private void addSpashScreen(){
+        getSupportFragmentManager().beginTransaction()
+                .add(R.id.fragment_container,new SplashScreen(),"Splash")
+                .commit();
+        disableBottomNav();
+        new Handler(Looper.getMainLooper()).postDelayed(this::loadHomeFragment, 2500);
+    }
+
+    private void loadHomeFragment() {
+        String userMail = userSharedPref.getString("UserMail", "Guest").toLowerCase(Locale.ROOT);
+
+        db.collection("Users").document(userMail).get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+                            getSupportFragmentManager().beginTransaction()
+                                    .replace(R.id.fragment_container, homeFragment, "Home")
+                                    .commit();
+                            enableBottomNav();
+                        }, 1000);
+
+                    } else {
+                        Log.e("SplashScreen", "User data not found");
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Toast.makeText(this, "Failed to load user data", Toast.LENGTH_SHORT).show();
+                    Log.e("SplashScreen", "Firestore error: " + e.getMessage());
+                });
     }
 }
