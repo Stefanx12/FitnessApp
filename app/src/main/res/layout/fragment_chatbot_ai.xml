@@ -49,7 +49,7 @@
                 android:id="@+id/ingredients_edit_text"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:hint="Enter ingredients"
+                android:hint="Ask something..."
                 android:textColorHint="@color/white"
                 android:textColor="@color/white"
                 android:background="@android:color/transparent"

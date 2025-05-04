@@ -59,7 +59,7 @@ public class ChatBotFragment extends Fragment {
                 Log.d(TAG, "Ingrediente introduse: " + ingredients);
                 getRecipeFromAI(ingredients);
                 ingredientsEditText.setText("");
-                ingredientsEditText.setHint("Enter ingredients");
+                ingredientsEditText.setHint("Ask something...");
             } else {
                 recipeTxtView.setText("Te rog introdu câteva ingrediente!");
                 Log.d(TAG, "Nu au fost introduse ingrediente.");

@@ -10,5 +10,6 @@
         android:title="@string/titleprogress"/>
     <item
         android:id="@+id/nav_chat"
+        android:icon="@drawable/chat_bot_svgrepo_com"
         android:title="ChatBot"/>
 </menu>
