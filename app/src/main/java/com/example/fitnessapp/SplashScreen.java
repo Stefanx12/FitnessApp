@@ -26,7 +26,7 @@ public class SplashScreen extends Fragment {
 
         if(background instanceof TransitionDrawable){
             TransitionDrawable transitionDrawable = (TransitionDrawable) background;
-            transitionDrawable.startTransition(2000);
+            transitionDrawable.startTransition(1250);
         }
 
         return view;

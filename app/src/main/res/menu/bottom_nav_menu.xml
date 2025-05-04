@@ -8,4 +8,7 @@
         android:id="@+id/nav_progress"
         android:icon="@drawable/progress_report_svgrepo_com"
         android:title="@string/titleprogress"/>
+    <item
+        android:id="@+id/nav_chat"
+        android:title="ChatBot"/>
 </menu>

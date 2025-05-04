@@ -20,6 +20,7 @@ import androidx.fragment.app.Fragment;
 import androidx.fragment.app.FragmentManager;
 import androidx.fragment.app.FragmentTransaction;
 
+import com.example.fitnessapp.Fragments.ChatBotFragment;
 import com.example.fitnessapp.Fragments.HomeFragment;
 import com.example.fitnessapp.Fragments.ProfileFragment;
 import com.example.fitnessapp.Fragments.ProgressFragment;
@@ -61,6 +62,7 @@ public class MainActivity extends AppCompatActivity {
     FirebaseFirestore db;
     HomeFragment homeFragment = new HomeFragment();
     ProgressFragment progressFragment = new ProgressFragment();
+    ChatBotFragment chatBotFragment = new ChatBotFragment();
     private final List<Fragment> quizFragments = Arrays.asList(
             new NameFragment(),
             new GoalFragment(),
@@ -95,6 +97,7 @@ public class MainActivity extends AppCompatActivity {
             if (itemId == R.id.nav_home) {
                 getSupportFragmentManager().beginTransaction()
                         .hide(progressFragment)
+                        .hide(chatBotFragment)
                         .show(homeFragment)
                         .commit();
             } else if (itemId == R.id.nav_progress) {
@@ -104,16 +107,35 @@ public class MainActivity extends AppCompatActivity {
                     progressFragment = new ProgressFragment();
                     getSupportFragmentManager().beginTransaction()
                             .add(R.id.fragment_container, progressFragment, "Progress")
+                            .hide(chatBotFragment)
                             .hide(homeFragment)
                             .commit();
                 } else {
                     getSupportFragmentManager().beginTransaction()
                             .hide(homeFragment)
+                            .hide(chatBotFragment)
                             .show(progress)
                             .commit();
                     ((ProgressFragment) progress).getMacrosDB();
                     ((ProgressFragment) progress).getCaloriesDB();
                     ((ProgressFragment) progress).getWeightHistory();
+                }
+            }else if(itemId == R.id.nav_chat){
+                Fragment chatBot = getSupportFragmentManager().findFragmentByTag("ChatBot");
+
+                if(chatBot == null){
+                    chatBotFragment = new ChatBotFragment();
+                    getSupportFragmentManager().beginTransaction()
+                            .add(R.id.fragment_container, chatBotFragment, "ChatBot")
+                            .hide(homeFragment)
+                            .hide(progressFragment)
+                            .commit();
+                }else{
+                    getSupportFragmentManager().beginTransaction()
+                            .hide(homeFragment)
+                            .hide(progressFragment)
+                            .show(chatBot)
+                            .commit();
                 }
             }
 
@@ -482,7 +504,7 @@ public class MainActivity extends AppCompatActivity {
                 .add(R.id.fragment_container,new SplashScreen(),"Splash")
                 .commit();
         disableBottomNav();
-        new Handler(Looper.getMainLooper()).postDelayed(this::loadHomeFragment, 2500);
+        new Handler(Looper.getMainLooper()).postDelayed(this::loadHomeFragment, 1500);
     }
 
     private void loadHomeFragment() {
