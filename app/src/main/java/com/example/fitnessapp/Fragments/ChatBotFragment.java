@@ -31,7 +31,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 
 public class ChatBotFragment extends Fragment {
-    private final String AIML_API_KEY = "853bb58bfaa1495e8830a065c78447aa";
+    private final String AIML_API_KEY = "secrey_key";
     private EditText ingredientsEditText;
     private Button ingredientsBtn;
     private RecyclerView recipeRecyclerView;
