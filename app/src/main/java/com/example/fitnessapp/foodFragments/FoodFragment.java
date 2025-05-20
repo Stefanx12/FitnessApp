@@ -36,6 +36,7 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.QueryDocumentSnapshot;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
@@ -47,14 +48,14 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class FoodFragment extends Fragment {
-    private TextView titleTextView;
+    private TextView titleTextView,totalCalories;
     private RecyclerView searchFoodRecycler,addedFoodRecycler;
     private ImageButton returnHome;
     private SearchView searchView;
     private AlimentsAdapter adapter;
     private ApiService apiService;
     private String mealType;
-    private final String API_KEY = "0c7af53c79ca4e0a889cb1f422c08e8b";
+    private final String API_KEY = "9243c5262b7e4100b3efb98559ba228f";
     private FirebaseFirestore db;
 
     public static FoodFragment newInstance(String mealType){
@@ -137,6 +138,7 @@ public class FoodFragment extends Fragment {
 
     private void initComponents(View view) {
         titleTextView = view.findViewById(R.id.foodTitle);
+        totalCalories = view.findViewById(R.id.total_calories_txt_view);
         searchFoodRecycler = view.findViewById(R.id.search_food_recycler);
         addedFoodRecycler = view.findViewById(R.id.added_breakfast_recycler);
         searchView = view.findViewById(R.id.foodsearchView);
@@ -184,7 +186,7 @@ public class FoodFragment extends Fragment {
                     adapter = new AlimentsAdapter(foods, item -> {
                         if (item instanceof SearchFoodRecipe) {
                             SearchFoodRecipe food = (SearchFoodRecipe) item;
-                            openFoodDetailFragment(food.getId(), food.getTitle(),food.getImage(),false);
+                            openFoodDetailFragment(food.getId(), food.getTitle(), food.getImage(), false);
                         } else if (item instanceof foodRecipe) {
                             foodRecipe food = (foodRecipe) item;
                         }
@@ -192,18 +194,27 @@ public class FoodFragment extends Fragment {
 
                     searchFoodRecycler.setAdapter(adapter);
                     searchFoodRecycler.setVisibility(View.VISIBLE);
-                    Log.d("BreakfastFragment", "Search results displayed successfully.");
+                    Log.d("FoodFragment", "Search results displayed successfully.");
                 } else {
-                    Log.d("BreakfastFragment", "No results found for query: " + query);
+                    String errorBody = "";
+                    try {
+                        if (response.errorBody() != null) {
+                            errorBody = response.errorBody().string();
+                        }
+                    } catch (IOException e) {
+                        errorBody = "Error reading errorBody: " + e.getMessage();
+                    }
+                    Log.e("FoodFragment", "API error. Code: " + response.code() + ", Message: " + response.message() + ", Body: " + errorBody);
                 }
             }
 
             @Override
             public void onFailure(@NonNull Call<FoodSearchResponse> call, @NonNull Throwable t) {
-                Log.e("BreakfastFragment", "Failed to fetch data from API", t);
+                Log.e("FoodFragment", "Network/API failure: " + t.getClass().getSimpleName() + " - " + t.getMessage(), t);
             }
         });
     }
+
 
     public void loadFirestoreData() {
         // Current day start
@@ -263,7 +274,7 @@ public class FoodFragment extends Fragment {
                                 food.setDocumentId(docId);
                                 foods.add(food);
 
-                                Log.d("Update","ID: FoodFragment: " + docId);
+                                Log.d("FoodFragment","ID: FoodFragment: " + docId);
                             } catch (Exception e) {
                                 Log.e("FoodFragment", "Error deserializing document " + document.getId(), e);
                             }
@@ -281,6 +292,13 @@ public class FoodFragment extends Fragment {
                         });
 
                         addedFoodRecycler.setAdapter(adapter);
+                        double totalCaloriesValue = 0.0;
+                        for(foodRecipe food : foods){
+                            totalCaloriesValue += food.getCalories();
+                        }
+
+                        totalCalories.setText("Total calories: " + Math.round(totalCaloriesValue) + " kcal");
+
                         Log.d("FoodFragment", "Firestore data loaded and displayed successfully.");
                     })
                     .addOnFailureListener(e -> Log.e("FoodFragment", "Failed to load data from Firestore", e));
@@ -300,7 +318,7 @@ public class FoodFragment extends Fragment {
             try {
                 return Integer.parseInt((String) value);
             } catch (NumberFormatException e) {
-                Log.e("BreakfastFragment", "Failed to parse String to int: " + value, e);
+                Log.e("FoodFragment", "Failed to parse String to int: " + value, e);
             }
         }
         return 0;
@@ -315,14 +333,14 @@ public class FoodFragment extends Fragment {
             try {
                 return Double.parseDouble((String) value);
             } catch (NumberFormatException e) {
-                Log.e("BreakfastFragment", "Failed to parse String to double: " + value, e);
+                Log.e("FoodFragment", "Failed to parse String to double: " + value, e);
             }
         }
         return 0.0;
     }
 
     private void openFoodDetailFragment(int foodId,String foodTitle,double caloriesFire,double proteinsFire,double fatsFire,double carbsFire,double servingSizeFire,
-                                           String docId,String mealType,boolean isUpdate) {
+                                        String docId,String mealType,boolean isUpdate) {
         FoodDetailFragment fragment = FoodDetailFragment.newInstance(foodId,foodTitle,caloriesFire,proteinsFire,fatsFire,carbsFire,servingSizeFire,
                 docId,mealType,isUpdate);
         FragmentManager fragmentManager = getParentFragmentManager();

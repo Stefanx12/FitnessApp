@@ -1,6 +1,9 @@
 package com.example.fitnessapp.Fragments;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -15,6 +18,7 @@ import androidx.annotation.NonNull;
 import androidx.fragment.app.Fragment;
 
 import com.example.fitnessapp.MainActivity;
+import com.example.fitnessapp.MondayAlarmReceiver;
 import com.example.fitnessapp.R;
 import com.github.mikephil.charting.animation.Easing;
 import com.github.mikephil.charting.charts.BarChart;
@@ -48,6 +52,7 @@ public class ProgressFragment extends Fragment {
     private Handler dayCheckHandler = new Handler();
     private Runnable dayCheckRunnable;
     private int lastCheckedDay = -1;
+    private BroadcastReceiver mondayAlarmReceiver;
     private TextView carbTxtView,proteinTxtView,fatTxtView;
 
     public ProgressFragment() {}
@@ -66,6 +71,7 @@ public class ProgressFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View view = inflater.inflate(R.layout.fragment_progress, container, false);
+
         macrosBarChart = view.findViewById(R.id.macros_bar_chart);
         caloriesBarChart = view.findViewById(R.id.calories_bar_chart);
         weightLineChart = view.findViewById(R.id.weight_line_chart);
@@ -78,9 +84,26 @@ public class ProgressFragment extends Fragment {
         getCaloriesDB();
         getWeightHistory();
 
-        startCheckingForMonday();
+        checkForMonday();
+
 
         return view;
+    }
+
+    private void checkForMonday() {
+        mondayAlarmReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                getMacrosDB();
+                getCaloriesDB();
+                getWeightHistory();
+                Toast.makeText(context, "New week started !", Toast.LENGTH_SHORT).show();
+            }
+        };
+
+        requireContext().registerReceiver(
+                mondayAlarmReceiver,
+                new IntentFilter(MondayAlarmReceiver.ACTION_MONDAY_ALARM), Context.RECEIVER_NOT_EXPORTED);
     }
 
     public void getMacrosDB() {
@@ -261,10 +284,10 @@ public class ProgressFragment extends Fragment {
     }
 
     private void showMacrosChart(List<BarEntry> filledEntries, List<BarEntry> emptyEntries, List<String> dayLabels, boolean hasData) {
-        int colorCarbs = Color.parseColor("#fe7f2d");
-        int colorProtein = Color.parseColor("#0096c7");
-        int colorFat = Color.parseColor("#fdc500");
-        int gray = Color.argb(80, 180, 180, 180);
+        int colorCarbs = Color.parseColor("#FF7F3F");
+        int colorProtein = Color.parseColor("#0077B6");
+        int colorFat = Color.parseColor("#F4C430");
+        int gray = Color.argb(100, 160, 160, 160);
 
         if (hasData) {
             setupBarChart(
@@ -294,7 +317,7 @@ public class ProgressFragment extends Fragment {
 
     private void showCaloriesChart(List<BarEntry> filledEntries, List<BarEntry> emptyEntries, List<String> dayLabels) {
         //int colorCalories = Color.argb(255, 120, 200, 80);
-        int colorCalories = Color.parseColor("#4ade80");
+        int colorCalories = Color.parseColor("#34D399");
         int colorEmpty = Color.argb(80, 180, 180, 180);
         //int colorEmpty = Color.parseColor("#A5A5A5");
 
@@ -385,30 +408,6 @@ public class ProgressFragment extends Fragment {
         legend.setCustom(entries);
     }
 
-    private void startCheckingForMonday() {
-        if (dayCheckRunnable != null) {
-            dayCheckHandler.removeCallbacks(dayCheckRunnable);
-        }
-
-        dayCheckRunnable = () -> {
-            Calendar calendar = Calendar.getInstance();
-            int today = calendar.get(Calendar.DAY_OF_WEEK);
-
-            if (today == Calendar.MONDAY && lastCheckedDay != Calendar.MONDAY) {
-                macrosBarChart.animate().alpha(0f).setDuration(300).withEndAction(() -> {
-                    getMacrosDB();
-                    macrosBarChart.animate().alpha(1f).setDuration(300);
-                    Toast.makeText(requireContext(), "New week started!", Toast.LENGTH_SHORT).show();
-                });
-            }
-
-            lastCheckedDay = today;
-            dayCheckHandler.postDelayed(dayCheckRunnable, 60 * 1000);
-        };
-
-        dayCheckHandler.post(dayCheckRunnable);
-    }
-
     public void getWeightHistory() {
         if (userMail == null || userMail.isEmpty()) {
             userMail = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail();
@@ -480,8 +479,14 @@ public class ProgressFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+
         if (dayCheckRunnable != null) {
             dayCheckHandler.removeCallbacks(dayCheckRunnable);
+        }
+
+        if (mondayAlarmReceiver != null) {
+            requireContext().unregisterReceiver(mondayAlarmReceiver);
+            mondayAlarmReceiver = null;
         }
     }
 

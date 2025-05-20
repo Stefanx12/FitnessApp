@@ -44,7 +44,6 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
             float[] yVals = entry.getYVals();
 
             if (yVals == null) {
-                // Single-value bar
                 mBarRect.set(x - halfBarWidth, Math.min(0, entry.getY()), x + halfBarWidth, Math.max(0, entry.getY()));
                 trans.rectToPixelPhase(mBarRect, mAnimator.getPhaseY());
                 drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.FULL);
@@ -60,19 +59,48 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
                     trans.rectToPixelPhase(mBarRect, mAnimator.getPhaseY());
                     mRenderPaint.setColor(dataSet.getColor(j));
 
-                    if (yVals.length == 1) {
-                        drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.FULL);
-                    } else if (j == 0) {
-                        drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.BOTTOM);
-                    } else if (j == yVals.length - 1) {
-                        drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.TOP);
+                    int chartId = ((View) mChart).getId();
+                    if (chartId == R.id.calories_bar_chart) {
+                        boolean isOnlySegment = yVals.length == 1;
+                        boolean isBottom = isOnlySegment || (y >= 0 && startY == 0f) || (y < 0 && startY == 0f);
+                        boolean isTop = isOnlySegment ||
+                                (y >= 0 && posY == yValsSum(yVals, true)) ||
+                                (y < 0 && negY == yValsSum(yVals, false));
+
+                        if (isTop && isBottom) {
+                            drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.FULL);
+                        } else if (isBottom) {
+                            drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.BOTTOM);
+                        } else if (isTop) {
+                            drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.TOP);
+                        } else {
+                            c.drawRect(mBarRect, mRenderPaint);
+                        }
                     } else {
-                        c.drawRect(mBarRect, mRenderPaint);
+                        if (yVals.length == 1) {
+                            drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.FULL);
+                        } else if (j == 0) {
+                            drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.BOTTOM);
+                        } else if (j == yVals.length - 1) {
+                            drawRoundedRect(c, mBarRect, mRenderPaint, CornerStyle.TOP);
+                        } else {
+                            c.drawRect(mBarRect, mRenderPaint);
+                        }
                     }
                 }
             }
         }
     }
+
+    private float yValsSum(float[] yVals, boolean positive) {
+        float sum = 0f;
+        for (float val : yVals) {
+            if (positive && val >= 0) sum += val;
+            if (!positive && val < 0) sum += val;
+        }
+        return sum;
+    }
+
 
     private enum CornerStyle { FULL, TOP, BOTTOM }
 
@@ -121,7 +149,8 @@ public class RoundedBarChartRenderer extends BarChartRenderer {
             float lineY = contentBottom - (contentBottom - contentTop) * (100f / 120f);
 
             Paint paint = new Paint();
-            paint.setColor(Color.parseColor("#ffffff"));
+            //paint.setColor(Color.argb(200, 86, 201, 166));
+            paint.setColor(Color.parseColor("#2D8A70"));
             paint.setStrokeWidth(5f);
             paint.setAntiAlias(true);
 

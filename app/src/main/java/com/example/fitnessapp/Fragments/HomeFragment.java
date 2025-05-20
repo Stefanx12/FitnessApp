@@ -26,17 +26,20 @@ import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Locale;
 
 public class HomeFragment extends Fragment {
 
     private ProgressBar progressBar,carbBar,proteinBar,fatsBar;
-    private TextView progressText,fatValue,carbValue,proteinValue;
-    private ImageButton profileButton,breakfastbutton,lunchbutton,dinnerbutton,snackbutton;
+    private TextView progressText,fatValue,carbValue,proteinValue,dateTxtView;
+    private ImageButton profileButton,breakfastbutton,lunchbutton,dinnerbutton,snackbutton,nextDay,previousDay;
     private CardView breakfastCardView,lunchCardView,dinnerCardView,snackCardView;
     private int i = 0;
     public static int dailyCaloriesGoal = 0;
     private FirebaseFirestore db;
+    private Calendar day = Calendar.getInstance();
     SharedPreferences sharedPreferences,userPreferences;
 
     public HomeFragment() {
@@ -77,8 +80,46 @@ public class HomeFragment extends Fragment {
         carbBar = view.findViewById(R.id.CarbsprogressBar);
         proteinBar = view.findViewById(R.id.ProteinprogressBar);
         fatsBar = view.findViewById(R.id.FatssprogressBar);
+        dateTxtView = view.findViewById(R.id.date_txt_view);
+        nextDay = view.findViewById(R.id.next_day_img_btn);
+        previousDay = view.findViewById(R.id.previous_day_img_btn);
 
         homeNavigations();
+        //updateDateUI();
+        //setupDateNavigation();
+    }
+
+    private void updateDateUI() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd.MM.yyyy", Locale.getDefault());
+        dateTxtView.setText(sdf.format(day.getTime()));
+
+        Calendar start = (Calendar) day.clone();
+        start.set(Calendar.HOUR_OF_DAY, 0);
+        start.set(Calendar.MINUTE, 0);
+        start.set(Calendar.SECOND, 0);
+        start.set(Calendar.MILLISECOND, 0);
+        Timestamp startOfDay = new Timestamp(start.getTime());
+
+        Calendar end = (Calendar) day.clone();
+        end.set(Calendar.HOUR_OF_DAY, 23);
+        end.set(Calendar.MINUTE, 59);
+        end.set(Calendar.SECOND, 59);
+        end.set(Calendar.MILLISECOND, 999);
+        Timestamp endOfDay = new Timestamp(end.getTime());
+
+        //retrieveDailyNutrients(startOfDay, endOfDay);
+    }
+
+    private void setupDateNavigation() {
+        previousDay.setOnClickListener(v -> {
+            day.add(Calendar.DAY_OF_MONTH, -1);
+            updateDateUI();
+        });
+
+        nextDay.setOnClickListener(v -> {
+            day.add(Calendar.DAY_OF_MONTH, 1);
+            updateDateUI();
+        });
     }
 
     private void homeNavigations() {
@@ -189,6 +230,41 @@ public class HomeFragment extends Fragment {
                 .addToBackStack(null)
                 .commit();
     }
+
+//    public void retrieveDailyNutrients(Timestamp startOfDay, Timestamp endOfDay) {
+//        String userMail = userPreferences.getString("UserMail", null);
+//        Log.d("HomeFragment", "User: " + userMail);
+//        if (userMail != null) {
+//            db.collection("AddedFood")
+//                    .whereEqualTo("userMail", userMail)
+//                    .whereGreaterThanOrEqualTo("date", startOfDay)
+//                    .whereLessThanOrEqualTo("date", endOfDay)
+//                    .get()
+//                    .addOnSuccessListener(queryDocumentSnapshots -> {
+//                        double totalCalories = 0;
+//                        double totalProteins = 0;
+//                        double totalFats = 0;
+//                        double totalCarbs = 0;
+//
+//                        for (DocumentSnapshot document : queryDocumentSnapshots) {
+//                            try {
+//                                totalCalories += document.getDouble("calories") != null ? document.getDouble("calories") : 0;
+//                                totalProteins += document.getDouble("proteins") != null ? document.getDouble("proteins") : 0;
+//                                totalFats += document.getDouble("fats") != null ? document.getDouble("fats") : 0;
+//                                totalCarbs += document.getDouble("carbohydrates") != null ? document.getDouble("carbohydrates") : 0;
+//                            } catch (Exception e) {
+//                                Log.e("HomeFragment", "Error parsing nutrient data: " + e.getMessage());
+//                            }
+//                        }
+//
+//                        updateNutrientValues(totalCalories, totalProteins, totalFats, totalCarbs);
+//                    })
+//                    .addOnFailureListener(e -> Log.e("HomeFragment", "Error fetching nutrient data: " + e.getMessage()));
+//        } else {
+//            Log.e("HomeFragment", "Error reading user in database");
+//        }
+//    }
+
 
     public void retrieveDailyNutrients() {
         Calendar calendar = Calendar.getInstance();
